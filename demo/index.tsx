@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom'
 
 import { UseFormDemo } from '../src/useForm/demo'
 import { UseQueryDemo } from '../src/useQuery/demo'
+import { UseMutationDemo } from '../src/useMutation/demo'
 
 interface ContainerProps {
   title: string
@@ -24,6 +25,9 @@ ReactDOM.render(
     </Container>
     <Container title="useQuery">
       <UseQueryDemo />
+    </Container>
+    <Container title="useMutation">
+      <UseMutationDemo />
     </Container>
   </>,
   document.getElementById('root')

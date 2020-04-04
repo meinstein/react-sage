@@ -28285,7 +28285,128 @@ if ("development" === 'production') {
 } else {
   module.exports = require('./cjs/react-dom.development.js');
 }
-},{"./cjs/react-dom.development.js":"../node_modules/react-dom/cjs/react-dom.development.js"}],"../src/useForm/demo.tsx":[function(require,module,exports) {
+},{"./cjs/react-dom.development.js":"../node_modules/react-dom/cjs/react-dom.development.js"}],"../src/useForm/types.ts":[function(require,module,exports) {
+
+},{}],"../src/useForm/index.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var _exportNames = {
+  useForm: true
+};
+exports.useForm = void 0;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _types = require("./types");
+
+Object.keys(_types).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _types[key];
+    }
+  });
+});
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var __assign = void 0 && (void 0).__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+
+      for (var p in s) {
+        if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
+    }
+
+    return t;
+  };
+
+  return __assign.apply(this, arguments);
+};
+
+var useForm = function useForm(initialState, validators) {
+  if (initialState === void 0) {
+    initialState = {};
+  }
+
+  if (validators === void 0) {
+    validators = {};
+  }
+
+  var _a = React.useState({}),
+      state = _a[0],
+      setState = _a[1];
+
+  React.useEffect(function () {
+    // Combine all possible known keys for the form's start data.
+    var startData = Object.keys(__assign(__assign({}, initialState), validators)).reduce(function (prev, curr) {
+      var _a;
+
+      return __assign(__assign({}, prev), (_a = {}, _a[curr] = {
+        // Check for existence of a validator for current key and apply it to initial state.
+        // If no validator for the current key, then there is no error.
+        error: typeof validators[curr] === 'function' ? !validators[curr](initialState[curr]) : false,
+        value: initialState[curr],
+        // Whether this field has been touched yet.
+        isDirty: false
+      }, _a));
+    }, {});
+    setState(startData); // Update start data when initialState changes!
+  }, [Object.keys(initialState).length]);
+
+  var get = function get(key) {
+    return state[key] ? state[key].value : '';
+  };
+
+  var set = function set(key) {
+    return function (value) {
+      setState(function (prevState) {
+        var _a;
+
+        return __assign(__assign({}, prevState), (_a = {}, _a[key] = {
+          isDirty: true,
+          error: validators[key] ? !validators[key](value) : false,
+          value: value
+        }, _a));
+      });
+    };
+  };
+
+  var hasErrors = Object.keys(state).map(function (key) {
+    return state[key].error;
+  }).some(Boolean);
+
+  var getError = function getError(key) {
+    // Only return error if the field is dirty (ie, user has given an input for it)
+    return state[key] ? state[key].isDirty && state[key].error : false;
+  }; // Parse clean data object from state
+
+
+  var data = Object.keys(state).reduce(function (prev, curr) {
+    var _a;
+
+    return __assign(__assign({}, prev), (_a = {}, _a[curr] = state[curr].value, _a));
+  }, {});
+  return {
+    get: get,
+    set: set,
+    hasErrors: hasErrors,
+    getError: getError,
+    data: data
+  };
+};
+
+exports.useForm = useForm;
+},{"react":"../node_modules/react/index.js","./types":"../src/useForm/types.ts"}],"../src/useForm/demo.tsx":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -28295,14 +28416,14 @@ exports.UseFormDemo = void 0;
 
 var React = _interopRequireWildcard(require("react"));
 
-var _useForm = require("./useForm");
+var _ = require(".");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 var UseFormDemo = function UseFormDemo() {
-  var _a = (0, _useForm.useForm)(),
+  var _a = (0, _.useForm)(),
       get = _a.get,
       set = _a.set;
 
@@ -28316,7 +28437,1056 @@ var UseFormDemo = function UseFormDemo() {
 };
 
 exports.UseFormDemo = UseFormDemo;
-},{}],"index.tsx":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js",".":"../src/useForm/index.tsx"}],"../src/useQuery/types.ts":[function(require,module,exports) {
+
+},{}],"../src/useQuery/index.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var _exportNames = {
+  cache: true,
+  useQuery: true
+};
+exports.useQuery = useQuery;
+exports.cache = void 0;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _types = require("./types");
+
+Object.keys(_types).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _types[key];
+    }
+  });
+});
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var __assign = void 0 && (void 0).__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+
+      for (var p in s) {
+        if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
+    }
+
+    return t;
+  };
+
+  return __assign.apply(this, arguments);
+};
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function sent() {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) {
+      try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+        if (y = 0, t) op = [op[0] & 2, t.value];
+
+        switch (op[0]) {
+          case 0:
+          case 1:
+            t = op;
+            break;
+
+          case 4:
+            _.label++;
+            return {
+              value: op[1],
+              done: false
+            };
+
+          case 5:
+            _.label++;
+            y = op[1];
+            op = [0];
+            continue;
+
+          case 7:
+            op = _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+
+          default:
+            if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+              _ = 0;
+              continue;
+            }
+
+            if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+              _.label = op[1];
+              break;
+            }
+
+            if (op[0] === 6 && _.label < t[1]) {
+              _.label = t[1];
+              t = op;
+              break;
+            }
+
+            if (t && _.label < t[2]) {
+              _.label = t[2];
+
+              _.ops.push(op);
+
+              break;
+            }
+
+            if (t[2]) _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+        }
+
+        op = body.call(thisArg, _);
+      } catch (e) {
+        op = [6, e];
+        y = 0;
+      } finally {
+        f = t = 0;
+      }
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+var sleep = function sleep(milliseconds) {
+  return new Promise(function (resolve) {
+    window.setTimeout(resolve, milliseconds);
+  });
+}; // In-memory cache. Create once. Use repeatedly.
+
+
+var cache = {};
+exports.cache = cache;
+
+function useQuery(method, options) {
+  var _this = this; // Parse out and create defaults for options
+
+
+  var _a = options || {},
+      _b = _a.wait,
+      wait = _b === void 0 ? false : _b,
+      _c = _a.caching,
+      caching = _c === void 0 ? {} : _c,
+      _d = _a.args,
+      args = _d === void 0 ? {} : _d,
+      _e = _a.retries,
+      retries = _e === void 0 ? 0 : _e; // Generate a cache key
+
+
+  var stableArgs = JSON.stringify(args, Object.keys(args).sort());
+  var cacheKey = method + "::" + stableArgs;
+
+  var getCachedResult = function getCachedResult() {
+    var cachedResult = cache[cacheKey];
+    if (!cachedResult) return null;
+    if (caching.refreshOnMount) return null;
+    var result = cachedResult.result,
+        cachedAt = cachedResult.cachedAt;
+
+    if (caching.ttl) {
+      return Date.now() - cachedAt > caching.ttl * 1000 ? null : result;
+    }
+
+    return result;
+  };
+
+  var _f = React.useState(function () {
+    var result = getCachedResult();
+    return {
+      result: result,
+      loading: !wait,
+      error: null
+    };
+  }),
+      state = _f[0],
+      setState = _f[1];
+
+  var fetchQuery = React.useCallback(function (retryCount) {
+    return __awaiter(_this, void 0, void 0, function () {
+      var cachedResult, result_1, error_1;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            if (wait) return [2
+            /*return*/
+            ];
+            cachedResult = getCachedResult();
+            if (!cachedResult) return [3
+            /*break*/
+            , 1];
+            setState(function (prevState) {
+              return __assign(__assign({}, prevState), {
+                result: cachedResult
+              });
+            });
+            return [3
+            /*break*/
+            , 9];
+
+          case 1:
+            setState(function (prevState) {
+              return __assign(__assign({}, prevState), {
+                loading: true
+              });
+            });
+            _a.label = 2;
+
+          case 2:
+            _a.trys.push([2, 4,, 9]);
+
+            return [4
+            /*yield*/
+            , method(args)];
+
+          case 3:
+            result_1 = _a.sent();
+            cache[cacheKey] = {
+              result: result_1,
+              cachedAt: Date.now()
+            };
+            setState(function (prevState) {
+              return __assign(__assign({}, prevState), {
+                loading: false,
+                result: result_1
+              });
+            });
+            return [3
+            /*break*/
+            , 9];
+
+          case 4:
+            error_1 = _a.sent();
+            if (!(retryCount > 0)) return [3
+            /*break*/
+            , 7];
+            return [4
+            /*yield*/
+            , sleep(retryCount * 250)];
+
+          case 5:
+            _a.sent();
+
+            return [4
+            /*yield*/
+            , fetchQuery(retryCount - 1)];
+
+          case 6:
+            return [2
+            /*return*/
+            , _a.sent()];
+
+          case 7:
+            setState(function (prevState) {
+              return __assign(__assign({}, prevState), {
+                loading: false,
+                error: error_1
+              });
+            });
+            _a.label = 8;
+
+          case 8:
+            return [3
+            /*break*/
+            , 9];
+
+          case 9:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  }, [state.loading, state.result, state.error, cacheKey, wait]); // This triggers on mount or when done waiting
+
+  React.useEffect(function () {
+    fetchQuery(retries);
+  }, [cacheKey, wait]);
+  return __assign(__assign({}, state), {
+    refresh: function refresh() {
+      return __awaiter(_this, void 0, Promise, function () {
+        return __generator(this, function (_a) {
+          switch (_a.label) {
+            case 0:
+              Reflect.deleteProperty(cache, cacheKey);
+              return [4
+              /*yield*/
+              , fetchQuery(retries)];
+
+            case 1:
+              return [2
+              /*return*/
+              , _a.sent()];
+          }
+        });
+      });
+    }
+  });
+}
+},{"react":"../node_modules/react/index.js","./types":"../src/useQuery/types.ts"}],"../src/useQuery/demo.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UseQueryDemo = void 0;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _2 = require(".");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function sent() {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) {
+      try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+        if (y = 0, t) op = [op[0] & 2, t.value];
+
+        switch (op[0]) {
+          case 0:
+          case 1:
+            t = op;
+            break;
+
+          case 4:
+            _.label++;
+            return {
+              value: op[1],
+              done: false
+            };
+
+          case 5:
+            _.label++;
+            y = op[1];
+            op = [0];
+            continue;
+
+          case 7:
+            op = _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+
+          default:
+            if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+              _ = 0;
+              continue;
+            }
+
+            if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+              _.label = op[1];
+              break;
+            }
+
+            if (op[0] === 6 && _.label < t[1]) {
+              _.label = t[1];
+              t = op;
+              break;
+            }
+
+            if (t && _.label < t[2]) {
+              _.label = t[2];
+
+              _.ops.push(op);
+
+              break;
+            }
+
+            if (t[2]) _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+        }
+
+        op = body.call(thisArg, _);
+      } catch (e) {
+        op = [6, e];
+        y = 0;
+      } finally {
+        f = t = 0;
+      }
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+var client = {
+  getResource: function getResource() {
+    return __awaiter(this, void 0, Promise, function () {
+      var response;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            return [4
+            /*yield*/
+            , fetch('https://jsonplaceholder.typicode.com/todos/1')];
+
+          case 1:
+            response = _a.sent();
+            return [4
+            /*yield*/
+            , response.json()];
+
+          case 2:
+            return [2
+            /*return*/
+            , _a.sent()];
+        }
+      });
+    });
+  }
+};
+
+var UseQueryDemo = function UseQueryDemo() {
+  var query = (0, _2.useQuery)(client.getResource);
+
+  if (query.loading) {
+    return React.createElement("div", null, "Loading...");
+  }
+
+  return React.createElement("pre", null, query.result.title);
+};
+
+exports.UseQueryDemo = UseQueryDemo;
+},{"react":"../node_modules/react/index.js",".":"../src/useQuery/index.tsx"}],"../src/useMutation/types.ts":[function(require,module,exports) {
+
+},{}],"../src/useMutation/index.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var _exportNames = {
+  useMutation: true
+};
+exports.useMutation = useMutation;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _types = require("./types");
+
+Object.keys(_types).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _types[key];
+    }
+  });
+});
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var __assign = void 0 && (void 0).__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+
+      for (var p in s) {
+        if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
+    }
+
+    return t;
+  };
+
+  return __assign.apply(this, arguments);
+};
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function sent() {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) {
+      try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+        if (y = 0, t) op = [op[0] & 2, t.value];
+
+        switch (op[0]) {
+          case 0:
+          case 1:
+            t = op;
+            break;
+
+          case 4:
+            _.label++;
+            return {
+              value: op[1],
+              done: false
+            };
+
+          case 5:
+            _.label++;
+            y = op[1];
+            op = [0];
+            continue;
+
+          case 7:
+            op = _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+
+          default:
+            if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+              _ = 0;
+              continue;
+            }
+
+            if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+              _.label = op[1];
+              break;
+            }
+
+            if (op[0] === 6 && _.label < t[1]) {
+              _.label = t[1];
+              t = op;
+              break;
+            }
+
+            if (t && _.label < t[2]) {
+              _.label = t[2];
+
+              _.ops.push(op);
+
+              break;
+            }
+
+            if (t[2]) _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+        }
+
+        op = body.call(thisArg, _);
+      } catch (e) {
+        op = [6, e];
+        y = 0;
+      } finally {
+        f = t = 0;
+      }
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+function useMutation(method, onSuccess) {
+  var _this = this;
+
+  var _a = React.useState({
+    response: null,
+    loading: false,
+    error: null
+  }),
+      result = _a[0],
+      setResult = _a[1];
+
+  var invoke = React.useCallback(function (args) {
+    return __awaiter(_this, void 0, void 0, function () {
+      var response_1, error_1;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            setResult(function (prevState) {
+              return __assign(__assign({}, prevState), {
+                loading: true
+              });
+            });
+            _a.label = 1;
+
+          case 1:
+            _a.trys.push([1, 3,, 4]);
+
+            return [4
+            /*yield*/
+            , method(args)];
+
+          case 2:
+            response_1 = _a.sent();
+
+            if (response_1) {
+              setResult(function (prevState) {
+                return __assign(__assign({}, prevState), {
+                  // Either use response OR set to true so onSuccess callback gets invoked.
+                  response: response_1,
+                  loading: false
+                });
+              });
+            }
+
+            return [3
+            /*break*/
+            , 4];
+
+          case 3:
+            error_1 = _a.sent();
+            setResult(function (prevState) {
+              return __assign(__assign({}, prevState), {
+                loading: false,
+                error: __assign(__assign({}, error_1), {
+                  message: error_1.message
+                })
+              });
+            });
+            return [3
+            /*break*/
+            , 4];
+
+          case 4:
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  }, [result.response, result.loading, result.error]);
+  React.useEffect(function () {
+    if (onSuccess && result.response) {
+      onSuccess(result.response);
+    }
+  }, [result.response]);
+  return {
+    result: result,
+    invoke: invoke,
+    reset: function reset() {
+      setResult({
+        response: null,
+        loading: false,
+        error: null
+      });
+    }
+  };
+}
+},{"react":"../node_modules/react/index.js","./types":"../src/useMutation/types.ts"}],"../src/useMutation/demo.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UseMutationDemo = void 0;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _2 = require(".");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function sent() {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) {
+      try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+        if (y = 0, t) op = [op[0] & 2, t.value];
+
+        switch (op[0]) {
+          case 0:
+          case 1:
+            t = op;
+            break;
+
+          case 4:
+            _.label++;
+            return {
+              value: op[1],
+              done: false
+            };
+
+          case 5:
+            _.label++;
+            y = op[1];
+            op = [0];
+            continue;
+
+          case 7:
+            op = _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+
+          default:
+            if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+              _ = 0;
+              continue;
+            }
+
+            if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+              _.label = op[1];
+              break;
+            }
+
+            if (op[0] === 6 && _.label < t[1]) {
+              _.label = t[1];
+              t = op;
+              break;
+            }
+
+            if (t && _.label < t[2]) {
+              _.label = t[2];
+
+              _.ops.push(op);
+
+              break;
+            }
+
+            if (t[2]) _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+        }
+
+        op = body.call(thisArg, _);
+      } catch (e) {
+        op = [6, e];
+        y = 0;
+      } finally {
+        f = t = 0;
+      }
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+var client = {
+  createResource: function createResource(resource) {
+    return __awaiter(this, void 0, Promise, function () {
+      var args, response;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            args = {
+              method: 'POST',
+              body: JSON.stringify(resource),
+              headers: {
+                'Content-type': 'application/json; charset=UTF-8'
+              }
+            };
+            return [4
+            /*yield*/
+            , fetch('https://jsonplaceholder.typicode.com/posts', args)];
+
+          case 1:
+            response = _a.sent();
+            return [4
+            /*yield*/
+            , response.json()];
+
+          case 2:
+            return [2
+            /*return*/
+            , _a.sent()];
+        }
+      });
+    });
+  }
+};
+
+var UseMutationDemo = function UseMutationDemo() {
+  var mutation = (0, _2.useMutation)(client.createResource);
+  return React.createElement(React.Fragment, null, React.createElement("button", {
+    onClick: function onClick() {
+      mutation.invoke({
+        title: 'foo',
+        body: 'bar',
+        userId: 1
+      });
+    }
+  }, "Create Resource"), React.createElement("pre", null, JSON.stringify(mutation.result.response)));
+};
+
+exports.UseMutationDemo = UseMutationDemo;
+},{"react":"../node_modules/react/index.js",".":"../src/useMutation/index.tsx"}],"index.tsx":[function(require,module,exports) {
 "use strict";
 
 var React = _interopRequireWildcard(require("react"));
@@ -28324,6 +29494,10 @@ var React = _interopRequireWildcard(require("react"));
 var ReactDOM = _interopRequireWildcard(require("react-dom"));
 
 var _demo = require("../src/useForm/demo");
+
+var _demo2 = require("../src/useQuery/demo");
+
+var _demo3 = require("../src/useMutation/demo");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -28339,8 +29513,10 @@ ReactDOM.render(React.createElement(React.Fragment, null, React.createElement(Co
   title: "useForm"
 }, React.createElement(_demo.UseFormDemo, null)), React.createElement(Container, {
   title: "useQuery"
-}, React.createElement(UseQueryDemo, null))), document.getElementById('root'));
-},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","../src/useForm/demo":"../src/useForm/demo.tsx"}],"../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+}, React.createElement(_demo2.UseQueryDemo, null)), React.createElement(Container, {
+  title: "useMutation"
+}, React.createElement(_demo3.UseMutationDemo, null))), document.getElementById('root'));
+},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","../src/useForm/demo":"../src/useForm/demo.tsx","../src/useQuery/demo":"../src/useQuery/demo.tsx","../src/useMutation/demo":"../src/useMutation/demo.tsx"}],"../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -28368,7 +29544,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59672" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57382" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

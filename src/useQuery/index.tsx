@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { QueryArgs, QueryResult } from './types'
+import { QueryOptions, QueryResult } from './types'
 
 export * from './types'
 
@@ -10,13 +10,14 @@ const sleep = (milliseconds: number): Promise<void> => {
   })
 }
 
-const cache = {}
+// In-memory cache. Create once. Use repeatedly.
+export const cache = {}
 
-export function useQuery<T>({ method, wait, options = {} }: QueryArgs<T>): QueryResult<T> {
+export function useQuery<T>(method: (args: {}) => Promise<T>, options?: QueryOptions): QueryResult<T> {
   // Parse out and create defaults for options
-  const { caching = {}, args = {}, retries = 0 } = options
+  const { wait = false, caching = {}, args = {}, retries = 0 } = options || {}
   // Generate a cache key
-  const stableArgs = JSON.stringify(args || {}, Object.keys(args || {}).sort())
+  const stableArgs = JSON.stringify(args, Object.keys(args).sort())
   const cacheKey = `${method}::${stableArgs}`
 
   const getCachedResult = (): T | null => {

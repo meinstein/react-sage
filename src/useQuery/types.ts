@@ -4,20 +4,11 @@ export interface CachingOptions {
   ttl?: number
 }
 
-interface MethodArgs {
-  [key: string]: string | number
-}
-
-export interface Options {
-  args?: MethodArgs
+export interface QueryOptions {
+  wait?: boolean
+  args?: {}
   caching?: CachingOptions
   retries?: number
-}
-
-export interface QueryArgs<T> {
-  method: (...args: MethodArgs[]) => Promise<T>
-  wait?: boolean
-  options?: Options
 }
 
 export interface QueryResult<T> {
