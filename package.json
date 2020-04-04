@@ -6,7 +6,7 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "npm run clean && webpack",
+    "build": "npm run clean && tsc",
     "clean": "rm -rf dist",
     "demo": "parcel demo/index.html --out-dir demo/output --no-cache",
     "lint": "tsc --noEmit && eslint '*/**/*.{ts,tsx}' --quiet --fix",
@@ -18,17 +18,12 @@
     "url": "https://github.com/meinstein/react-sage.git"
   },
   "keywords": [
-    "react"
+    "react",
+    "hooks"
   ],
   "author": "Maximillian Einstein",
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.9.0",
-    "@babel/plugin-transform-runtime": "^7.9.0",
-    "@babel/preset-env": "^7.9.0",
-    "@babel/preset-react": "^7.9.4",
-    "@babel/preset-typescript": "^7.9.0",
-    "@types/jest": "^25.1.4",
     "@types/react": "^16.9.26",
     "@types/react-dom": "^16.9.5",
     "@typescript-eslint/eslint-plugin": "^2.25.0",
@@ -37,13 +32,9 @@
     "eslint-config-prettier": "^6.10.1",
     "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-react": "^7.19.0",
-    "jest": "^25.2.3",
     "prettier": "^2.0.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "ts-loader": "^6.2.2",
-    "typescript": "^3.8.3",
-    "webpack": "^4.42.1",
-    "webpack-cli": "^3.3.11"
+    "typescript": "^3.8.3"
   }
 }

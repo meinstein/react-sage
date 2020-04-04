@@ -28285,164 +28285,24 @@ if ("development" === 'production') {
 } else {
   module.exports = require('./cjs/react-dom.development.js');
 }
-},{"./cjs/react-dom.development.js":"../node_modules/react-dom/cjs/react-dom.development.js"}],"../node_modules/@babel/runtime/helpers/typeof.js":[function(require,module,exports) {
-function _typeof(obj) {
-  "@babel/helpers - typeof";
-
-  if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-    module.exports = _typeof = function _typeof(obj) {
-      return typeof obj;
-    };
-  } else {
-    module.exports = _typeof = function _typeof(obj) {
-      return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    };
-  }
-
-  return _typeof(obj);
-}
-
-module.exports = _typeof;
-},{}],"../dist/index.js":[function(require,module,exports) {
-var define;
+},{"./cjs/react-dom.development.js":"../node_modules/react-dom/cjs/react-dom.development.js"}],"../src/useForm/demo.tsx":[function(require,module,exports) {
 "use strict";
 
-var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-!function (e, r) {
-  "object" == (typeof exports === "undefined" ? "undefined" : (0, _typeof2.default)(exports)) && "object" == (typeof module === "undefined" ? "undefined" : (0, _typeof2.default)(module)) ? module.exports = r(require("react")) : "function" == typeof define && define.amd ? define(["React"], r) : "object" == (typeof exports === "undefined" ? "undefined" : (0, _typeof2.default)(exports)) ? exports["react-sage"] = r(require("react")) : e["react-sage"] = r(e.React);
-}(window, function (e) {
-  return function (e) {
-    var r = {};
-
-    function t(n) {
-      if (r[n]) return r[n].exports;
-      var o = r[n] = {
-        i: n,
-        l: !1,
-        exports: {}
-      };
-      return e[n].call(o.exports, o, o.exports, t), o.l = !0, o.exports;
-    }
-
-    return t.m = e, t.c = r, t.d = function (e, r, n) {
-      t.o(e, r) || Object.defineProperty(e, r, {
-        enumerable: !0,
-        get: n
-      });
-    }, t.r = function (e) {
-      "undefined" != typeof Symbol && Symbol.toStringTag && Object.defineProperty(e, Symbol.toStringTag, {
-        value: "Module"
-      }), Object.defineProperty(e, "__esModule", {
-        value: !0
-      });
-    }, t.t = function (e, r) {
-      if (1 & r && (e = t(e)), 8 & r) return e;
-      if (4 & r && "object" == (0, _typeof2.default)(e) && e && e.__esModule) return e;
-      var n = Object.create(null);
-      if (t.r(n), Object.defineProperty(n, "default", {
-        enumerable: !0,
-        value: e
-      }), 2 & r && "string" != typeof e) for (var o in e) {
-        t.d(n, o, function (r) {
-          return e[r];
-        }.bind(null, o));
-      }
-      return n;
-    }, t.n = function (e) {
-      var r = e && e.__esModule ? function () {
-        return e.default;
-      } : function () {
-        return e;
-      };
-      return t.d(r, "a", r), r;
-    }, t.o = function (e, r) {
-      return Object.prototype.hasOwnProperty.call(e, r);
-    }, t.p = "", t(t.s = 1);
-  }([function (r, t) {
-    r.exports = e;
-  }, function (e, r, t) {
-    "use strict";
-
-    t.r(r), t.d(r, "useForm", function () {
-      return u;
-    });
-
-    var n = t(0),
-        _o = function o() {
-      return (_o = Object.assign || function (e) {
-        for (var r, t = 1, n = arguments.length; t < n; t++) {
-          for (var o in r = arguments[t]) {
-            Object.prototype.hasOwnProperty.call(r, o) && (e[o] = r[o]);
-          }
-        }
-
-        return e;
-      }).apply(this, arguments);
-    },
-        u = function u(e, r) {
-      void 0 === e && (e = {}), void 0 === r && (r = {});
-      var t = n.useState({}),
-          u = t[0],
-          i = t[1];
-      n.useEffect(function () {
-        var t = Object.keys(_o(_o({}, e), r)).reduce(function (t, n) {
-          var u;
-          return _o(_o({}, t), ((u = {})[n] = {
-            error: "function" == typeof r[n] && !r[n](e[n]),
-            value: e[n],
-            isDirty: !1
-          }, u));
-        }, {});
-        i(t);
-      }, [Object.keys(e).length]);
-      return {
-        get: function get(e) {
-          return u[e] ? u[e].value : "";
-        },
-        set: function set(e) {
-          return function (t) {
-            i(function (n) {
-              var u;
-              return _o(_o({}, n), ((u = {})[e] = {
-                isDirty: !0,
-                error: !!r[e] && !r[e](t),
-                value: t
-              }, u));
-            });
-          };
-        },
-        hasErrors: Object.keys(u).map(function (e) {
-          return u[e].error;
-        }).some(Boolean),
-        getError: function getError(e) {
-          return !!u[e] && u[e].isDirty && u[e].error;
-        },
-        data: Object.keys(u).reduce(function (e, r) {
-          var t;
-          return _o(_o({}, e), ((t = {})[r] = u[r].value, t));
-        }, {})
-      };
-    };
-  }]);
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
-},{"@babel/runtime/helpers/typeof":"../node_modules/@babel/runtime/helpers/typeof.js","react":"../node_modules/react/index.js"}],"index.tsx":[function(require,module,exports) {
-"use strict";
+exports.UseFormDemo = void 0;
 
 var React = _interopRequireWildcard(require("react"));
 
-var ReactDOM = _interopRequireWildcard(require("react-dom"));
-
-var _dist = require("../dist");
+var _useForm = require("./useForm");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var Form = function Form() {
-  var _a = (0, _dist.useForm)(),
+var UseFormDemo = function UseFormDemo() {
+  var _a = (0, _useForm.useForm)(),
       get = _a.get,
       set = _a.set;
 
@@ -28455,8 +28315,32 @@ var Form = function Form() {
   });
 };
 
-ReactDOM.render(React.createElement(React.Fragment, null, React.createElement(Form, null)), document.getElementById('root'));
-},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","../dist":"../dist/index.js"}],"../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+exports.UseFormDemo = UseFormDemo;
+},{}],"index.tsx":[function(require,module,exports) {
+"use strict";
+
+var React = _interopRequireWildcard(require("react"));
+
+var ReactDOM = _interopRequireWildcard(require("react-dom"));
+
+var _demo = require("../src/useForm/demo");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var Container = function Container(_a) {
+  var title = _a.title,
+      children = _a.children;
+  return React.createElement("div", null, React.createElement("h1", null, title), children);
+};
+
+ReactDOM.render(React.createElement(React.Fragment, null, React.createElement(Container, {
+  title: "useForm"
+}, React.createElement(_demo.UseFormDemo, null)), React.createElement(Container, {
+  title: "useQuery"
+}, React.createElement(UseQueryDemo, null))), document.getElementById('root'));
+},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","../src/useForm/demo":"../src/useForm/demo.tsx"}],"../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -28484,7 +28368,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53261" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59672" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

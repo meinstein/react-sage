@@ -1,25 +1,30 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
 
-import { useForm } from '../dist'
+import { UseFormDemo } from '../src/useForm/demo'
+import { UseQueryDemo } from '../src/useQuery/demo'
 
-const Form: React.FC = () => {
-  const { get, set } = useForm()
+interface ContainerProps {
+  title: string
+}
 
+const Container: React.FC<ContainerProps> = ({ title, children }) => {
   return (
-    <input
-      type="text"
-      value={get('foo')}
-      onChange={(event): void => {
-        set('foo')(event.target.value)
-      }}
-    />
+    <div>
+      <h1>{title}</h1>
+      {children}
+    </div>
   )
 }
 
 ReactDOM.render(
   <>
-    <Form />
+    <Container title="useForm">
+      <UseFormDemo />
+    </Container>
+    <Container title="useQuery">
+      <UseQueryDemo />
+    </Container>
   </>,
   document.getElementById('root')
 )

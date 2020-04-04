@@ -5,9 +5,7 @@
     "module": "es6",
     "target": "es5",
     "jsx": "react",
-    "lib": [
-      "es2017"
-    ],
+    "lib": ["dom", "es2017"],
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "sourceMap": true,
@@ -15,11 +13,6 @@
     "declarationDir": "./dist/",
     "esModuleInterop": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "src/**/*test.ts"
-  ]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "src/**/*test.ts", "src/**/*demo.tsx"]
 }
