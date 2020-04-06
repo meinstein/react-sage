@@ -19,7 +19,12 @@
   },
   "keywords": [
     "react",
-    "hooks"
+    "hooks",
+    "form",
+    "query",
+    "mutation",
+    "file",
+    "input"
   ],
   "author": "Maximillian Einstein",
   "license": "MIT",

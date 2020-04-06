@@ -4,6 +4,7 @@ import * as ReactDOM from 'react-dom'
 import { UseFormDemo } from '../src/useForm/demo'
 import { UseQueryDemo } from '../src/useQuery/demo'
 import { UseMutationDemo } from '../src/useMutation/demo'
+import { UseFilePickerDemo } from '../src/useFilePicker/demo'
 
 interface ContainerProps {
   title: string
@@ -28,6 +29,9 @@ ReactDOM.render(
     </Container>
     <Container title="useMutation">
       <UseMutationDemo />
+    </Container>
+    <Container title="useFilePicker">
+      <UseFilePickerDemo />
     </Container>
   </>,
   document.getElementById('root')

@@ -29486,7 +29486,463 @@ var UseMutationDemo = function UseMutationDemo() {
 };
 
 exports.UseMutationDemo = UseMutationDemo;
-},{"react":"../node_modules/react/index.js",".":"../src/useMutation/index.tsx"}],"index.tsx":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js",".":"../src/useMutation/index.tsx"}],"../src/useFilePicker/utils/load-image.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.loadImage = void 0;
+
+var loadImage = function loadImage(dataUrl, dims) {
+  return new Promise(function (resolve, reject) {
+    // create a new html image element
+    var img = new Image(); // set the image src attribute to our dataUrl
+
+    img.src = dataUrl; // listen for onload event
+
+    img.addEventListener('load', function () {
+      if (img.width < dims.minImageHeight || img.height < dims.minImageHeight || img.width > dims.maxImageWidth || img.height > dims.maxImageWidth) {
+        reject();
+      }
+
+      resolve();
+    }, false);
+    img.addEventListener('error', function (ev) {
+      reject("Error loading image: " + ev);
+    });
+  });
+};
+
+exports.loadImage = loadImage;
+},{}],"../src/useFilePicker/utils/load-file.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.loadFile = void 0;
+
+var loadFile = function loadFile(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.addEventListener('load', function () {
+      // convert image file to base64 string
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      }
+    }, false);
+    reader.addEventListener('error', function () {
+      reject(new Error('There was an error uploading the file'));
+    }, false);
+
+    if (file) {
+      reader.readAsDataURL(file);
+    }
+  });
+};
+
+exports.loadFile = loadFile;
+},{}],"../src/useFilePicker/utils/index.ts":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _loadImage = require("./load-image");
+
+Object.keys(_loadImage).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _loadImage[key];
+    }
+  });
+});
+
+var _loadFile = require("./load-file");
+
+Object.keys(_loadFile).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _loadFile[key];
+    }
+  });
+});
+},{"./load-image":"../src/useFilePicker/utils/load-image.ts","./load-file":"../src/useFilePicker/utils/load-file.ts"}],"../src/useFilePicker/types.ts":[function(require,module,exports) {
+
+},{}],"../src/useFilePicker/index.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var _exportNames = {
+  useFilePicker: true
+};
+exports.useFilePicker = void 0;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _utils = require("./utils");
+
+var _types = require("./types");
+
+Object.keys(_types).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _types[key];
+    }
+  });
+});
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var __assign = void 0 && (void 0).__assign || function () {
+  __assign = Object.assign || function (t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+      s = arguments[i];
+
+      for (var p in s) {
+        if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
+    }
+
+    return t;
+  };
+
+  return __assign.apply(this, arguments);
+};
+
+var __awaiter = void 0 && (void 0).__awaiter || function (thisArg, _arguments, P, generator) {
+  function adopt(value) {
+    return value instanceof P ? value : new P(function (resolve) {
+      resolve(value);
+    });
+  }
+
+  return new (P || (P = Promise))(function (resolve, reject) {
+    function fulfilled(value) {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function rejected(value) {
+      try {
+        step(generator["throw"](value));
+      } catch (e) {
+        reject(e);
+      }
+    }
+
+    function step(result) {
+      result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+    }
+
+    step((generator = generator.apply(thisArg, _arguments || [])).next());
+  });
+};
+
+var __generator = void 0 && (void 0).__generator || function (thisArg, body) {
+  var _ = {
+    label: 0,
+    sent: function sent() {
+      if (t[0] & 1) throw t[1];
+      return t[1];
+    },
+    trys: [],
+    ops: []
+  },
+      f,
+      y,
+      t,
+      g;
+  return g = {
+    next: verb(0),
+    "throw": verb(1),
+    "return": verb(2)
+  }, typeof Symbol === "function" && (g[Symbol.iterator] = function () {
+    return this;
+  }), g;
+
+  function verb(n) {
+    return function (v) {
+      return step([n, v]);
+    };
+  }
+
+  function step(op) {
+    if (f) throw new TypeError("Generator is already executing.");
+
+    while (_) {
+      try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+        if (y = 0, t) op = [op[0] & 2, t.value];
+
+        switch (op[0]) {
+          case 0:
+          case 1:
+            t = op;
+            break;
+
+          case 4:
+            _.label++;
+            return {
+              value: op[1],
+              done: false
+            };
+
+          case 5:
+            _.label++;
+            y = op[1];
+            op = [0];
+            continue;
+
+          case 7:
+            op = _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+
+          default:
+            if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+              _ = 0;
+              continue;
+            }
+
+            if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+              _.label = op[1];
+              break;
+            }
+
+            if (op[0] === 6 && _.label < t[1]) {
+              _.label = t[1];
+              t = op;
+              break;
+            }
+
+            if (t && _.label < t[2]) {
+              _.label = t[2];
+
+              _.ops.push(op);
+
+              break;
+            }
+
+            if (t[2]) _.ops.pop();
+
+            _.trys.pop();
+
+            continue;
+        }
+
+        op = body.call(thisArg, _);
+      } catch (e) {
+        op = [6, e];
+        y = 0;
+      } finally {
+        f = t = 0;
+      }
+    }
+
+    if (op[0] & 5) throw op[1];
+    return {
+      value: op[0] ? op[1] : void 0,
+      done: true
+    };
+  }
+};
+
+var useFilePicker = function useFilePicker(_a) {
+  var minFileSize = _a.minFileSize,
+      maxFileSize = _a.maxFileSize,
+      minImageWidth = _a.minImageWidth,
+      maxImageWidth = _a.maxImageWidth,
+      minImageHeight = _a.minImageHeight,
+      maxImageHeight = _a.maxImageHeight;
+
+  var _b = React.useState(null),
+      files = _b[0],
+      setFileList = _b[1];
+
+  var _c = React.useState({}),
+      errors = _c[0],
+      setError = _c[1];
+
+  var fileInputRef = React.useRef(undefined);
+
+  var _onChange = function onChange(fileList) {
+    return __awaiter(void 0, void 0, Promise, function () {
+      var iterableFileList, minBytes_1, tooSmall_1, maxBytes_1, tooBig_1, dims_1, dataUrls, err_1;
+      return __generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            if (!fileList || !fileList.length) return [2
+            /*return*/
+            ];
+            iterableFileList = Array.from(fileList);
+
+            if (minFileSize) {
+              minBytes_1 = minFileSize * 1000000;
+              tooSmall_1 = iterableFileList.some(function (file) {
+                return file.size < minBytes_1;
+              });
+              setError(function (prevErrors) {
+                return __assign(__assign({}, prevErrors), {
+                  isFileSizeWrong: tooSmall_1
+                });
+              });
+            }
+
+            if (maxFileSize) {
+              maxBytes_1 = maxFileSize * 1000000;
+              tooBig_1 = iterableFileList.some(function (file) {
+                return file.size > maxBytes_1;
+              });
+              setError(function (prevErrors) {
+                return __assign(__assign({}, prevErrors), {
+                  isFileSizeWrong: tooBig_1
+                });
+              });
+            }
+
+            if (!(minImageWidth || maxImageWidth || minImageHeight || maxImageHeight)) return [3
+            /*break*/
+            , 5];
+            dims_1 = {
+              minImageWidth: minImageWidth,
+              maxImageWidth: maxImageWidth,
+              minImageHeight: minImageHeight,
+              maxImageHeight: maxImageHeight
+            };
+            _a.label = 1;
+
+          case 1:
+            _a.trys.push([1, 4,, 5]);
+
+            return [4
+            /*yield*/
+            , Promise.all(iterableFileList.map(_utils.loadFile))];
+
+          case 2:
+            dataUrls = _a.sent();
+            return [4
+            /*yield*/
+            , Promise.all(dataUrls.map(function (dataUrl) {
+              return (0, _utils.loadImage)(dataUrl, dims_1);
+            }))];
+
+          case 3:
+            _a.sent();
+
+            setError(function (prevErrors) {
+              return __assign(__assign({}, prevErrors), {
+                isImageSizeWrong: false
+              });
+            });
+            return [3
+            /*break*/
+            , 5];
+
+          case 4:
+            err_1 = _a.sent();
+            setError(function (prevErrors) {
+              return __assign(__assign({}, prevErrors), {
+                isImageSizeWrong: true
+              });
+            });
+            return [3
+            /*break*/
+            , 5];
+
+          case 5:
+            setFileList(fileList);
+            return [2
+            /*return*/
+            ];
+        }
+      });
+    });
+  };
+
+  return {
+    files: files,
+    errors: errors,
+    onClick: function onClick() {
+      var _a;
+
+      (_a = fileInputRef === null || fileInputRef === void 0 ? void 0 : fileInputRef.current) === null || _a === void 0 ? void 0 : _a.click();
+    },
+    HiddenFileInput: function HiddenFileInput(_a) {
+      var multiple = _a.multiple,
+          accept = _a.accept;
+      return React.createElement("input", {
+        type: "file",
+        ref: fileInputRef,
+        multiple: multiple,
+        accept: accept,
+        style: {
+          display: 'none'
+        },
+        onChange: function onChange(evt) {
+          var target = evt.target;
+
+          _onChange(target.files);
+        }
+      });
+    }
+  };
+};
+
+exports.useFilePicker = useFilePicker;
+},{"react":"../node_modules/react/index.js","./utils":"../src/useFilePicker/utils/index.ts","./types":"../src/useFilePicker/types.ts"}],"../src/useFilePicker/demo.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UseFilePickerDemo = void 0;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _ = require(".");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var UseFilePickerDemo = function UseFilePickerDemo() {
+  var _a = (0, _.useFilePicker)({
+    maxFileSize: 0.1,
+    maxImageWidth: 1081
+  }),
+      onClick = _a.onClick,
+      errors = _a.errors,
+      HiddenFileInput = _a.HiddenFileInput;
+
+  return React.createElement("div", null, React.createElement("button", {
+    onClick: onClick
+  }, "Click me to trigger hidden file input"), React.createElement(HiddenFileInput, {
+    accept: ".jpg, .jpeg, .png",
+    multiple: false
+  }), errors.isFileSizeWrong && React.createElement("b", null, "File size is wrong!"), errors.isImageSizeWrong && React.createElement("b", null, "Image dimensions are wrong!"));
+};
+
+exports.UseFilePickerDemo = UseFilePickerDemo;
+},{"react":"../node_modules/react/index.js",".":"../src/useFilePicker/index.tsx"}],"index.tsx":[function(require,module,exports) {
 "use strict";
 
 var React = _interopRequireWildcard(require("react"));
@@ -29498,6 +29954,8 @@ var _demo = require("../src/useForm/demo");
 var _demo2 = require("../src/useQuery/demo");
 
 var _demo3 = require("../src/useMutation/demo");
+
+var _demo4 = require("../src/useFilePicker/demo");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -29515,8 +29973,10 @@ ReactDOM.render(React.createElement(React.Fragment, null, React.createElement(Co
   title: "useQuery"
 }, React.createElement(_demo2.UseQueryDemo, null)), React.createElement(Container, {
   title: "useMutation"
-}, React.createElement(_demo3.UseMutationDemo, null))), document.getElementById('root'));
-},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","../src/useForm/demo":"../src/useForm/demo.tsx","../src/useQuery/demo":"../src/useQuery/demo.tsx","../src/useMutation/demo":"../src/useMutation/demo.tsx"}],"../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+}, React.createElement(_demo3.UseMutationDemo, null)), React.createElement(Container, {
+  title: "useFilePicker"
+}, React.createElement(_demo4.UseFilePickerDemo, null))), document.getElementById('root'));
+},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","../src/useForm/demo":"../src/useForm/demo.tsx","../src/useQuery/demo":"../src/useQuery/demo.tsx","../src/useMutation/demo":"../src/useMutation/demo.tsx","../src/useFilePicker/demo":"../src/useFilePicker/demo.tsx"}],"../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -29544,7 +30004,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "57382" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52698" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
