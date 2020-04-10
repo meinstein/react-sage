@@ -1,12 +1,12 @@
 {
   "name": "react-sage",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && npm run lint && tsc",
     "clean": "rm -rf dist",
     "demo": "parcel demo/index.html --out-dir demo/output --no-cache",
     "lint": "tsc --noEmit && eslint '*/**/*.{ts,tsx}' --quiet --fix",
