@@ -1,5 +1,40 @@
-import { UseFileImageDims } from '../types'
+import { UseFileImageDims } from './types'
 
+/**
+ * Wraps native File Reader API in a promise.
+ */
+export const loadFile = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.addEventListener(
+      'load',
+      () => {
+        // convert image file to base64 string
+        if (typeof reader.result === 'string') {
+          resolve(reader.result)
+        }
+      },
+      false
+    )
+
+    reader.addEventListener(
+      'error',
+      () => {
+        reject(new Error('There was an error uploading the file'))
+      },
+      false
+    )
+
+    if (file) {
+      reader.readAsDataURL(file)
+    }
+  })
+}
+
+/**
+ * Wraps native image loader API in a promise.
+ */
 export const loadImage = (dataUrl: string, dims: UseFileImageDims): Promise<void> => {
   return new Promise((resolve, reject) => {
     // create a new html image element

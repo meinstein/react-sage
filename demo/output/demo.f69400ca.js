@@ -28333,50 +28333,109 @@ var __assign = void 0 && (void 0).__assign || function () {
   return __assign.apply(this, arguments);
 };
 
-var useForm = function useForm(initialState, validators) {
-  if (initialState === void 0) {
-    initialState = {};
-  }
+var FormStorage =
+/** @class */
+function () {
+  function FormStorage() {}
 
-  if (validators === void 0) {
-    validators = {};
-  }
+  FormStorage.prototype.getStorageKey = function (name) {
+    return "useForm::" + name;
+  };
 
-  var _a = React.useState({}),
-      state = _a[0],
-      setState = _a[1];
+  FormStorage.prototype.getForm = function (_a) {
+    var name = _a.name,
+        version = _a.version;
+    var key = this.getStorageKey(name);
+    var persistedForm = JSON.parse(localStorage.getItem(key));
+
+    if (persistedForm) {
+      // We have persisted state for this version
+      if (persistedForm.version === version) {
+        return persistedForm.state;
+      } // Remove incorrect version
+
+
+      this.clear(name);
+    }
+
+    return null;
+  };
+
+  FormStorage.prototype.setForm = function (_a, state) {
+    var name = _a.name,
+        version = _a.version;
+    var key = this.getStorageKey(name);
+    var persistedForm = {};
+    persistedForm.version = version;
+    persistedForm.state = state;
+    localStorage.setItem(key, JSON.stringify(persistedForm));
+  };
+
+  FormStorage.prototype.clear = function (name) {
+    var key = this.getStorageKey(name);
+    localStorage.removeItem(key);
+  };
+
+  return FormStorage;
+}();
+
+var storage = new FormStorage();
+
+var useForm = function useForm(options) {
+  var persistConfig = options.persistConfig,
+      _a = options.initialState,
+      initialState = _a === void 0 ? {} : _a,
+      _b = options.validators,
+      validators = _b === void 0 ? {} : _b;
+
+  var _c = React.useState({}),
+      state = _c[0],
+      setState = _c[1];
 
   React.useEffect(function () {
-    // Combine all possible known keys for the form's start data.
-    var startData = Object.keys(__assign(__assign({}, initialState), validators)).reduce(function (prev, curr) {
+    var persistedState = storage.getForm(persistConfig) || {}; // We only care about initialState that is distinct from that which has already been persisted.
+
+    var nonPersistedInitialStateKeys = Object.keys(initialState).filter(function (key) {
+      return !persistedState[key];
+    }); // Combine all known keys when initializing form
+
+    var startData = Object.keys(validators).concat(nonPersistedInitialStateKeys).reduce(function (prev, curr) {
       var _a;
 
       return __assign(__assign({}, prev), (_a = {}, _a[curr] = {
         // Check for existence of a validator for current key and apply it to initial state.
         // If no validator for the current key, then there is no error.
-        error: typeof validators[curr] === 'function' ? !validators[curr](initialState[curr]) : false,
+        error: typeof validators[curr] === 'function' && !validators[curr](initialState[curr]),
         value: initialState[curr],
         // Whether this field has been touched yet.
         isDirty: false
       }, _a));
-    }, {});
+    }, persistedState);
     setState(startData); // Update start data when initialState changes!
   }, [Object.keys(initialState).length]);
 
   var get = function get(key) {
-    return state[key] ? state[key].value : '';
+    var _a;
+
+    return (_a = state[key]) === null || _a === void 0 ? void 0 : _a.value;
   };
 
   var set = function set(key) {
     return function (value) {
-      setState(function (prevState) {
+      setState(function (prevFormState) {
         var _a;
 
-        return __assign(__assign({}, prevState), (_a = {}, _a[key] = {
+        var nextFormState = __assign(__assign({}, prevFormState), (_a = {}, _a[key] = {
           isDirty: true,
           error: validators[key] ? !validators[key](value) : false,
           value: value
         }, _a));
+
+        if (persistConfig) {
+          storage.setForm(persistConfig, nextFormState);
+        }
+
+        return nextFormState;
       });
     };
   };
@@ -28396,12 +28455,24 @@ var useForm = function useForm(initialState, validators) {
 
     return __assign(__assign({}, prev), (_a = {}, _a[curr] = state[curr].value, _a));
   }, {});
+
+  var reset = function reset() {
+    if (persistConfig) {
+      storage.clear(persistConfig.name);
+    }
+
+    Object.keys(state).forEach(function (field) {
+      return set(field)('');
+    });
+  };
+
   return {
     get: get,
     set: set,
     hasErrors: hasErrors,
     getError: getError,
-    data: data
+    data: data,
+    reset: reset
   };
 };
 
@@ -28423,17 +28494,34 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 var UseFormDemo = function UseFormDemo() {
-  var _a = (0, _.useForm)(),
+  var _a = (0, _.useForm)({
+    persistConfig: {
+      name: 'demo',
+      version: 1
+    },
+    initialState: {
+      foo: 'I am foo.'
+    }
+  }),
       get = _a.get,
-      set = _a.set;
+      set = _a.set,
+      reset = _a.reset;
 
-  return React.createElement("input", {
+  return React.createElement(React.Fragment, null, React.createElement("input", {
     type: "text",
-    value: get('foo'),
     onChange: function onChange(event) {
       set('foo')(event.target.value);
+    },
+    value: get('foo')
+  }), React.createElement("input", {
+    type: "text",
+    value: get('bar'),
+    onChange: function onChange(event) {
+      set('bar')(event.target.value);
     }
-  });
+  }), React.createElement("button", {
+    onClick: reset
+  }, "Reset"));
 };
 
 exports.UseFormDemo = UseFormDemo;
@@ -30004,7 +30092,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52698" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49472" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
