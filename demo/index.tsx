@@ -5,6 +5,7 @@ import { UseFormDemo } from '../src/useForm/demo'
 import { UseQueryDemo } from '../src/useQuery/demo'
 import { UseMutationDemo } from '../src/useMutation/demo'
 import { UseFilePickerDemo } from '../src/useFilePicker/demo'
+import { UsePersistedStateDemo } from '../src/usePersistedState/demo'
 
 interface ContainerProps {
   title: string
@@ -23,6 +24,9 @@ ReactDOM.render(
   <>
     <Container title="useForm">
       <UseFormDemo />
+    </Container>
+    <Container title="usePersistedState">
+      <UsePersistedStateDemo />
     </Container>
     <Container title="useQuery">
       <UseQueryDemo />

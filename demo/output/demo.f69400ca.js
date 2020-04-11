@@ -28285,7 +28285,111 @@ if ("development" === 'production') {
 } else {
   module.exports = require('./cjs/react-dom.development.js');
 }
-},{"./cjs/react-dom.development.js":"../node_modules/react-dom/cjs/react-dom.development.js"}],"../src/useForm/types.ts":[function(require,module,exports) {
+},{"./cjs/react-dom.development.js":"../node_modules/react-dom/cjs/react-dom.development.js"}],"../src/usePersistedState/types.ts":[function(require,module,exports) {
+
+},{}],"../src/usePersistedState/index.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var _exportNames = {
+  usePersistedState: true
+};
+exports.usePersistedState = usePersistedState;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _types = require("./types");
+
+Object.keys(_types).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function () {
+      return _types[key];
+    }
+  });
+});
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+// function generateVersionKey(key: string): string {
+//   return `${key}::version`
+// }
+function formatForStorage(version, data) {
+  return {
+    version: version,
+    data: data
+  };
+}
+
+function usePersistedState(_a) {
+  var storage = _a.storage,
+      key = _a.key,
+      initialState = _a.initialState,
+      _b = _a.version,
+      version = _b === void 0 ? 0.1 : _b; // State to store our value
+  // Pass initial state function to useState so logic is only executed once
+
+  var _c = React.useState(function () {
+    try {
+      var item = storage.getItem(key);
+      if (!item) return initialState;
+
+      var _a = JSON.parse(item) || {},
+          existingVersion = _a.version,
+          data = _a.data;
+
+      var hasNewerVersion = parseFloat(existingVersion) !== version;
+
+      if (hasNewerVersion) {
+        // @TODO: add migration option
+        storage.removeItem(key);
+        throw new Error("Has newer version for " + key + " persisted state.");
+      }
+
+      return data;
+    } catch (err) {
+      // If err also return initialState
+      console.error(err);
+      return initialState;
+    }
+  }),
+      state = _c[0],
+      setState = _c[1]; // Return a wrapped version of useState's setter function that ...
+  // ... persists the new value to localStorage.
+
+
+  var set = function set(value) {
+    try {
+      // Allow value to be a function so we have same API as useState
+      var valueToStore = value instanceof Function ? value(state) : value; // Save state
+
+      setState(valueToStore); // Save to local storage
+
+      storage.setItem(key, JSON.stringify(formatForStorage(version, valueToStore)));
+    } catch (err) {
+      // A more advanced implementation would handle the err case
+      console.error(err);
+    }
+  };
+
+  var remove = function remove() {
+    try {
+      storage.removeItem(key);
+      setState(initialState);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  return [state, set, remove];
+}
+},{"react":"../node_modules/react/index.js","./types":"../src/usePersistedState/types.ts"}],"../src/useForm/types.ts":[function(require,module,exports) {
 
 },{}],"../src/useForm/index.tsx":[function(require,module,exports) {
 "use strict";
@@ -28299,6 +28403,8 @@ var _exportNames = {
 exports.useForm = void 0;
 
 var React = _interopRequireWildcard(require("react"));
+
+var _usePersistedState = require("../usePersistedState");
 
 var _types = require("./types");
 
@@ -28333,53 +28439,19 @@ var __assign = void 0 && (void 0).__assign || function () {
   return __assign.apply(this, arguments);
 };
 
-var FormStorage =
-/** @class */
-function () {
-  function FormStorage() {}
+var __spreadArrays = void 0 && (void 0).__spreadArrays || function () {
+  for (var s = 0, i = 0, il = arguments.length; i < il; i++) {
+    s += arguments[i].length;
+  }
 
-  FormStorage.prototype.getStorageKey = function (name) {
-    return "useForm::" + name;
-  };
-
-  FormStorage.prototype.getForm = function (_a) {
-    var name = _a.name,
-        version = _a.version;
-    var key = this.getStorageKey(name);
-    var persistedForm = JSON.parse(localStorage.getItem(key));
-
-    if (persistedForm) {
-      // We have persisted state for this version
-      if (persistedForm.version === version) {
-        return persistedForm.state;
-      } // Remove incorrect version
-
-
-      this.clear(name);
+  for (var r = Array(s), k = 0, i = 0; i < il; i++) {
+    for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++) {
+      r[k] = a[j];
     }
+  }
 
-    return null;
-  };
-
-  FormStorage.prototype.setForm = function (_a, state) {
-    var name = _a.name,
-        version = _a.version;
-    var key = this.getStorageKey(name);
-    var persistedForm = {};
-    persistedForm.version = version;
-    persistedForm.state = state;
-    localStorage.setItem(key, JSON.stringify(persistedForm));
-  };
-
-  FormStorage.prototype.clear = function (name) {
-    var key = this.getStorageKey(name);
-    localStorage.removeItem(key);
-  };
-
-  return FormStorage;
-}();
-
-var storage = new FormStorage();
+  return r;
+};
 
 var useForm = function useForm(options) {
   var persistConfig = options.persistConfig,
@@ -28388,82 +28460,116 @@ var useForm = function useForm(options) {
       _b = options.validators,
       validators = _b === void 0 ? {} : _b;
 
-  var _c = React.useState({}),
+  var _c = persistConfig ? (0, _usePersistedState.usePersistedState)(persistConfig) : React.useState(),
       state = _c[0],
-      setState = _c[1];
+      setState = _c[1],
+      removePersistedState = _c[2];
+  /**
+   * Removes form metadata and simply returns { field: value }
+   */
 
-  React.useEffect(function () {
-    var persistedState = storage.getForm(persistConfig) || {}; // We only care about initialState that is distinct from that which has already been persisted.
 
-    var nonPersistedInitialStateKeys = Object.keys(initialState).filter(function (key) {
-      return !persistedState[key];
-    }); // Combine all known keys when initializing form
+  var data = Object.keys(state || {}).reduce(function (accumulatedState, field) {
+    var _a;
 
-    var startData = Object.keys(validators).concat(nonPersistedInitialStateKeys).reduce(function (prev, curr) {
+    return __assign(__assign({}, accumulatedState), (_a = {}, _a[field] = state[field].value, _a));
+  }, {});
+  var initForm = React.useCallback(function () {
+    var allInitialState = __assign(__assign({}, initialState), data);
+
+    var allFields = __spreadArrays(Object.keys(validators), Object.keys(allInitialState));
+
+    var startData = allFields.reduce(function (accumulatedState, field) {
       var _a;
 
-      return __assign(__assign({}, prev), (_a = {}, _a[curr] = {
-        // Check for existence of a validator for current key and apply it to initial state.
-        // If no validator for the current key, then there is no error.
-        error: typeof validators[curr] === 'function' && !validators[curr](initialState[curr]),
-        value: initialState[curr],
+      var value = allInitialState[field] || '';
+      return __assign(__assign({}, accumulatedState), (_a = {}, _a[field] = {
+        // Check for existence of a validator for current field and apply it to initial state.
+        // If no validator for the current field, then there is no error.
+        error: typeof validators[field] === 'function' && !validators[field](value),
+        value: value,
         // Whether this field has been touched yet.
         isDirty: false
       }, _a));
-    }, persistedState);
-    setState(startData); // Update start data when initialState changes!
-  }, [Object.keys(initialState).length]);
+    }, {});
+    setState(function () {
+      return startData;
+    });
+  }, []);
+  /**
+   * This effect initializes the form.
+   */
 
-  var get = function get(key) {
+  React.useEffect(function () {
+    initForm();
+  }, [Object.keys(initialState).length]);
+  /**
+   * This getter is utilized by inputs to grab its own state from the form.
+   */
+
+  var get = function get(field) {
     var _a;
 
-    return (_a = state[key]) === null || _a === void 0 ? void 0 : _a.value;
+    return ((_a = state === null || state === void 0 ? void 0 : state[field]) === null || _a === void 0 ? void 0 : _a.value) || '';
   };
+  /**
+   * This setter it utilized by inputs to update its own part in the form state.
+   */
 
-  var set = function set(key) {
+
+  var set = function set(field) {
     return function (value) {
       setState(function (prevFormState) {
         var _a;
 
-        var nextFormState = __assign(__assign({}, prevFormState), (_a = {}, _a[key] = {
+        return __assign(__assign({}, prevFormState), (_a = {}, _a[field] = {
           isDirty: true,
-          error: validators[key] ? !validators[key](value) : false,
+          error: (validators === null || validators === void 0 ? void 0 : validators[field]) ? !validators[field](value) : false,
           value: value
         }, _a));
-
-        if (persistConfig) {
-          storage.setForm(persistConfig, nextFormState);
-        }
-
-        return nextFormState;
       });
     };
   };
+  /**
+   * Keeps track of whether there are ANY errors present in entire form state.
+   */
 
-  var hasErrors = Object.keys(state).map(function (key) {
+
+  var hasErrors = Object.keys(state || {}).map(function (key) {
     return state[key].error;
   }).some(Boolean);
+  /**
+   * Can be used by an individual input to determine its own error state.
+   */
 
   var getError = function getError(key) {
-    // Only return error if the field is dirty (ie, user has given an input for it)
+    // Only return error if field is dirty (ie, user has already given it a value)
     return state[key] ? state[key].isDirty && state[key].error : false;
-  }; // Parse clean data object from state
+  };
+  /**
+   * Resets form state back to initialization period.
+   */
 
-
-  var data = Object.keys(state).reduce(function (prev, curr) {
-    var _a;
-
-    return __assign(__assign({}, prev), (_a = {}, _a[curr] = state[curr].value, _a));
-  }, {});
 
   var reset = function reset() {
-    if (persistConfig) {
-      storage.clear(persistConfig.name);
-    }
-
-    Object.keys(state).forEach(function (field) {
-      return set(field)('');
+    setState(function () {
+      return {};
     });
+    initForm();
+  };
+  /**
+   * Wipes out all form state.
+   */
+
+
+  var clear = function clear() {
+    if (removePersistedState) {
+      removePersistedState();
+    } else {
+      setState(function () {
+        return {};
+      });
+    }
   };
 
   return {
@@ -28472,12 +28578,13 @@ var useForm = function useForm(options) {
     hasErrors: hasErrors,
     getError: getError,
     data: data,
-    reset: reset
+    reset: reset,
+    clear: clear
   };
 };
 
 exports.useForm = useForm;
-},{"react":"../node_modules/react/index.js","./types":"../src/useForm/types.ts"}],"../src/useForm/demo.tsx":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js","../usePersistedState":"../src/usePersistedState/index.tsx","./types":"../src/useForm/types.ts"}],"../src/useForm/demo.tsx":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -28493,35 +28600,51 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
+var Field;
+
+(function (Field) {
+  Field["FOO"] = "foo";
+  Field["BAR"] = "bar";
+})(Field || (Field = {}));
+
 var UseFormDemo = function UseFormDemo() {
-  var _a = (0, _.useForm)({
+  var _a, _b;
+
+  var _c = (0, _.useForm)({
+    // Optional - can persist form state. Accepts same config as usePersistedState.
     persistConfig: {
-      name: 'demo',
-      version: 1
+      key: 'demo-form',
+      version: 6,
+      storage: localStorage
     },
-    initialState: {
-      foo: 'I am foo.'
-    }
+    // Optional - can set initial state of certain form fields.
+    initialState: (_a = {}, _a[Field.FOO] = 'I am foo.', _a),
+    // Optional - add validators for fields.
+    validators: (_b = {}, _b[Field.BAR] = Boolean, _b[Field.FOO] = Boolean, _b)
   }),
-      get = _a.get,
-      set = _a.set,
-      reset = _a.reset;
+      get = _c.get,
+      set = _c.set,
+      reset = _c.reset,
+      clear = _c.clear,
+      hasErrors = _c.hasErrors;
 
   return React.createElement(React.Fragment, null, React.createElement("input", {
     type: "text",
+    value: get(Field.FOO),
     onChange: function onChange(event) {
-      set('foo')(event.target.value);
-    },
-    value: get('foo')
+      set(Field.FOO)(event.target.value);
+    }
   }), React.createElement("input", {
     type: "text",
-    value: get('bar'),
+    value: get(Field.BAR),
     onChange: function onChange(event) {
-      set('bar')(event.target.value);
+      set(Field.BAR)(event.target.value);
     }
   }), React.createElement("button", {
     onClick: reset
-  }, "Reset"));
+  }, "Reset"), React.createElement("button", {
+    onClick: clear
+  }, "Clear"), React.createElement("div", null, hasErrors && React.createElement("b", null, "There is an error.")));
 };
 
 exports.UseFormDemo = UseFormDemo;
@@ -29574,13 +29697,41 @@ var UseMutationDemo = function UseMutationDemo() {
 };
 
 exports.UseMutationDemo = UseMutationDemo;
-},{"react":"../node_modules/react/index.js",".":"../src/useMutation/index.tsx"}],"../src/useFilePicker/utils/load-image.ts":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js",".":"../src/useMutation/index.tsx"}],"../src/useFilePicker/utils.tsx":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.loadImage = void 0;
+exports.loadImage = exports.loadFile = void 0;
+
+/**
+ * Wraps native File Reader API in a promise.
+ */
+var loadFile = function loadFile(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.addEventListener('load', function () {
+      // convert image file to base64 string
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      }
+    }, false);
+    reader.addEventListener('error', function () {
+      reject(new Error('There was an error uploading the file'));
+    }, false);
+
+    if (file) {
+      reader.readAsDataURL(file);
+    }
+  });
+};
+/**
+ * Wraps native image loader API in a promise.
+ */
+
+
+exports.loadFile = loadFile;
 
 var loadImage = function loadImage(dataUrl, dims) {
   return new Promise(function (resolve, reject) {
@@ -29603,65 +29754,7 @@ var loadImage = function loadImage(dataUrl, dims) {
 };
 
 exports.loadImage = loadImage;
-},{}],"../src/useFilePicker/utils/load-file.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.loadFile = void 0;
-
-var loadFile = function loadFile(file) {
-  return new Promise(function (resolve, reject) {
-    var reader = new FileReader();
-    reader.addEventListener('load', function () {
-      // convert image file to base64 string
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-      }
-    }, false);
-    reader.addEventListener('error', function () {
-      reject(new Error('There was an error uploading the file'));
-    }, false);
-
-    if (file) {
-      reader.readAsDataURL(file);
-    }
-  });
-};
-
-exports.loadFile = loadFile;
-},{}],"../src/useFilePicker/utils/index.ts":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _loadImage = require("./load-image");
-
-Object.keys(_loadImage).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function () {
-      return _loadImage[key];
-    }
-  });
-});
-
-var _loadFile = require("./load-file");
-
-Object.keys(_loadFile).forEach(function (key) {
-  if (key === "default" || key === "__esModule") return;
-  Object.defineProperty(exports, key, {
-    enumerable: true,
-    get: function () {
-      return _loadFile[key];
-    }
-  });
-});
-},{"./load-image":"../src/useFilePicker/utils/load-image.ts","./load-file":"../src/useFilePicker/utils/load-file.ts"}],"../src/useFilePicker/types.ts":[function(require,module,exports) {
+},{}],"../src/useFilePicker/types.ts":[function(require,module,exports) {
 
 },{}],"../src/useFilePicker/index.tsx":[function(require,module,exports) {
 "use strict";
@@ -29996,7 +30089,7 @@ var useFilePicker = function useFilePicker(_a) {
 };
 
 exports.useFilePicker = useFilePicker;
-},{"react":"../node_modules/react/index.js","./utils":"../src/useFilePicker/utils/index.ts","./types":"../src/useFilePicker/types.ts"}],"../src/useFilePicker/demo.tsx":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js","./utils":"../src/useFilePicker/utils.tsx","./types":"../src/useFilePicker/types.ts"}],"../src/useFilePicker/demo.tsx":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -30030,7 +30123,48 @@ var UseFilePickerDemo = function UseFilePickerDemo() {
 };
 
 exports.UseFilePickerDemo = UseFilePickerDemo;
-},{"react":"../node_modules/react/index.js",".":"../src/useFilePicker/index.tsx"}],"index.tsx":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js",".":"../src/useFilePicker/index.tsx"}],"../src/usePersistedState/demo.tsx":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.UsePersistedStateDemo = void 0;
+
+var React = _interopRequireWildcard(require("react"));
+
+var _ = require(".");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+var UsePersistedStateDemo = function UsePersistedStateDemo() {
+  var _a = (0, _.usePersistedState)({
+    key: 'persisted-state-demo',
+    version: 6,
+    storage: localStorage,
+    initialState: ''
+  }),
+      state = _a[0],
+      setState = _a[1],
+      remove = _a[2];
+
+  return React.createElement(React.Fragment, null, React.createElement("pre", null, "This state is persisted: ", state), React.createElement("input", {
+    type: "text",
+    value: state,
+    onChange: function onChange(event) {
+      setState(function () {
+        return event.target.value;
+      });
+    }
+  }), React.createElement("button", {
+    onClick: remove
+  }, "Remove"));
+};
+
+exports.UsePersistedStateDemo = UsePersistedStateDemo;
+},{"react":"../node_modules/react/index.js",".":"../src/usePersistedState/index.tsx"}],"index.tsx":[function(require,module,exports) {
 "use strict";
 
 var React = _interopRequireWildcard(require("react"));
@@ -30045,6 +30179,8 @@ var _demo3 = require("../src/useMutation/demo");
 
 var _demo4 = require("../src/useFilePicker/demo");
 
+var _demo5 = require("../src/usePersistedState/demo");
+
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -30058,13 +30194,15 @@ var Container = function Container(_a) {
 ReactDOM.render(React.createElement(React.Fragment, null, React.createElement(Container, {
   title: "useForm"
 }, React.createElement(_demo.UseFormDemo, null)), React.createElement(Container, {
+  title: "usePersistedState"
+}, React.createElement(_demo5.UsePersistedStateDemo, null)), React.createElement(Container, {
   title: "useQuery"
 }, React.createElement(_demo2.UseQueryDemo, null)), React.createElement(Container, {
   title: "useMutation"
 }, React.createElement(_demo3.UseMutationDemo, null)), React.createElement(Container, {
   title: "useFilePicker"
 }, React.createElement(_demo4.UseFilePickerDemo, null))), document.getElementById('root'));
-},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","../src/useForm/demo":"../src/useForm/demo.tsx","../src/useQuery/demo":"../src/useQuery/demo.tsx","../src/useMutation/demo":"../src/useMutation/demo.tsx","../src/useFilePicker/demo":"../src/useFilePicker/demo.tsx"}],"../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"react":"../node_modules/react/index.js","react-dom":"../node_modules/react-dom/index.js","../src/useForm/demo":"../src/useForm/demo.tsx","../src/useQuery/demo":"../src/useQuery/demo.tsx","../src/useMutation/demo":"../src/useMutation/demo.tsx","../src/useFilePicker/demo":"../src/useFilePicker/demo.tsx","../src/usePersistedState/demo":"../src/usePersistedState/demo.tsx"}],"../../../.config/yarn/global/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -30092,7 +30230,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49472" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50281" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

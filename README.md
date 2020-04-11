@@ -15,6 +15,7 @@ import { useForm } from 'react-sage/useForm'
 import { useQuery } from 'react-sage/useQuery'
 import { useMutation } from 'react-sage/useMutation'
 import { useFilePicker } from 'react-sage/useFilePicker'
+import { usePersistedState } from 'react-sage/usePersistedState'
 ```
 
 ## Demo

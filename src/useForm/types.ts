@@ -1,8 +1,10 @@
+import { UsePersistedStateStorageOptions } from '../usePersistedState/types'
+
 export interface Validators {
   [key: string]: (value: string | number | boolean) => boolean
 }
 
-export interface FormData {
+export interface PrettyFormData {
   [key: string]: string | number | boolean
 }
 
@@ -20,29 +22,20 @@ export interface Form {
   get(field: string): string | number | boolean | undefined
   set(field: string): (value: string | number | boolean) => void
   hasErrors: boolean
-  data: FormData
+  data: PrettyFormData
   getError(field: string): boolean
+  /**
+   * Resets form state back to initialization period.
+   */
   reset(): void
-}
-
-export interface PersistFormConfig {
   /**
-   * The name of the persisted form.
+   * Removes all form state.
    */
-  name: string
-  /**
-   * The version of the form. Subsequent versions will over-write previously stored form data.
-   */
-  version: number
+  clear(): void
 }
 
 export interface FormOptions {
-  persistConfig?: PersistFormConfig
-  initialState?: FormData
+  persistConfig?: UsePersistedStateStorageOptions
+  initialState?: PrettyFormData
   validators?: Validators
-}
-
-export interface PersistedForm {
-  version: number
-  state: FormState
 }
