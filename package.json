@@ -1,9 +1,8 @@
 {
   "name": "react-sage",
-  "version": "0.0.5",
+  "version": "0.0.8",
   "description": "",
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "npm run clean && npm run lint && tsc",

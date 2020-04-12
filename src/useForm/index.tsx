@@ -22,8 +22,9 @@ export const useForm = (options?: FormOptions): Form => {
     {}
   )
 
-  const initForm = React.useCallback(() => {
-    const allInitialState = { ...initialState, ...data }
+  const initForm = (): void => {
+    // Note: Spreading in initialState after data ensures that initialState is always king.
+    const allInitialState = { ...data, ...initialState }
     const allFields = [...Object.keys(validators), ...Object.keys(allInitialState)]
     const startData = allFields.reduce((accumulatedState, field) => {
       const value = allInitialState[field] || ''
@@ -40,7 +41,7 @@ export const useForm = (options?: FormOptions): Form => {
       }
     }, {})
     setState(() => startData)
-  }, [Object.keys(initialState).length])
+  }
 
   /**
    * This effect initializes the form.
