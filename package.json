@@ -24,7 +24,8 @@
     "query",
     "mutation",
     "file",
-    "input"
+    "input",
+    "storage"
   ],
   "author": "Maximillian Einstein",
   "license": "MIT",
