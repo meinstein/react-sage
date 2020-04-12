@@ -10,7 +10,7 @@ enum Field {
 export const UseFormDemo: React.FC = () => {
   const { get, set, reset, clear, hasErrors } = useForm({
     // Optional - can persist form state. Accepts same config as usePersistedState.
-    persistConfig: { key: 'demo-form', version: 6, storage: localStorage },
+    persistConfig: { key: 'demo-form', version: 1, storage: localStorage },
     // Optional - can set initial state of certain form fields.
     initialState: { [Field.FOO]: 'I am foo.' },
     // Optional - add validators for fields.
