@@ -40,7 +40,7 @@ export const useForm = (options?: FormOptions): Form => {
       }
     }, {})
     setState(() => startData)
-  }, [])
+  }, [Object.keys(initialState).length])
 
   /**
    * This effect initializes the form.
