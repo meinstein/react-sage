@@ -87,7 +87,7 @@ export const useForm = (options?: FormOptions): Form => {
    */
   const getError = (key: string): boolean => {
     // Only return error if field is dirty (ie, user has already given it a value)
-    return state[key] ? state[key].isDirty && state[key].error : false
+    return !!state?.[key]?.isDirty && state[key].error
   }
 
   /**
