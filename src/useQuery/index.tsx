@@ -8,7 +8,7 @@ export * from './types'
 export const cache = new Cache()
 
 export function useQuery<T>(
-  method: (...agrs: Array<string | number | boolean | {}>) => Promise<T>,
+  method: (...args: Array<string | number | boolean | {}>) => Promise<T>,
   options?: QueryOptions
 ): QueryResult<T> {
   // Parse out and create defaults for options

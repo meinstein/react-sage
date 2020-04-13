@@ -5,7 +5,7 @@ import { MutationResponse } from './types'
 export * from './types'
 
 export function useMutation<T>(
-  method: (args: {}) => Promise<T>,
+  method: (...args: Array<string | number | boolean | {}>) => Promise<T>,
   onSuccess?: (response: T) => void
 ): MutationResponse<T> {
   const [result, setResult] = React.useState({
@@ -15,7 +15,7 @@ export function useMutation<T>(
   })
 
   const invoke = React.useCallback(
-    async (args: {}) => {
+    async (...args: Array<string | number | boolean | {}>) => {
       setResult((prevState) => ({ ...prevState, loading: true }))
       try {
         const response = await method(args)

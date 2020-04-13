@@ -6,6 +6,6 @@ export interface MutationResult<T> {
 
 export interface MutationResponse<T> {
   result: MutationResult<T>
-  invoke: (args: {}) => Promise<void>
+  invoke: (...args: Array<string | number | boolean | {}>) => Promise<void>
   reset(): void
 }

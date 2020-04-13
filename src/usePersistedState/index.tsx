@@ -17,7 +17,7 @@ export function usePersistedState<S>({
   initialState,
   version = 0.1
 }: UsePersistedStateOptions<S>): [S, Dispatch<SetStateAction<S>>, () => void] {
-  const storageKey = React.useMemo(() => `usePersistedState__${key}`, [key])
+  const storageKey = React.useMemo(() => `usePersistedState::${key}`, [key])
   // State to store our value
   // Pass initial state function to useState so logic is only executed once
   const [state, setState] = React.useState(() => {
@@ -29,7 +29,7 @@ export function usePersistedState<S>({
       if (hasNewerVersion) {
         // @TODO: add migration option
         storage.removeItem(storageKey)
-        throw new Error(`Has newer version for ${key} persisted state.`)
+        throw new Error(`Newer version for ${key} in persisted state. Over writing existing version.`)
       }
       return data
     } catch (err) {

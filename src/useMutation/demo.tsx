@@ -24,7 +24,9 @@ const client = {
 }
 
 export const UseMutationDemo: React.FC = () => {
-  const mutation = useMutation<Resource>(client.createResource)
+  const mutation = useMutation<Resource>(client.createResource, (data) => {
+    console.log(data)
+  })
 
   return (
     <>
