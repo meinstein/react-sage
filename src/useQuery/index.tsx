@@ -1,44 +1,27 @@
 import * as React from 'react'
 
 import { QueryOptions, QueryResult } from './types'
+import { sleep, Cache } from './utils'
 
 export * from './types'
 
-const sleep = (milliseconds: number): Promise<void> => {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, milliseconds)
-  })
-}
+export const cache = new Cache()
 
-// In-memory cache. Create once. Use repeatedly.
-export const cache = {}
-
-export function useQuery<T>(method: (args: {}) => Promise<T>, options?: QueryOptions): QueryResult<T> {
+export function useQuery<T>(
+  method: (...agrs: Array<string | number | boolean | {}>) => Promise<T>,
+  options?: QueryOptions
+): QueryResult<T> {
   // Parse out and create defaults for options
   const { wait = false, caching = {}, args = {}, retries = 0 } = options || {}
   // Generate a cache key
   const stableArgs = JSON.stringify(args, Object.keys(args).sort())
-  const cacheKey = `${method}::${stableArgs}`
-
-  const getCachedResult = (): T | null => {
-    const cachedResult = cache[cacheKey]
-
-    if (!cachedResult) return null
-    if (caching.refreshOnMount) return null
-
-    const { result, cachedAt } = cachedResult
-
-    if (caching.ttl) {
-      return Date.now() - cachedAt > caching.ttl * 1000 ? null : result
-    }
-
-    return result
-  }
+  // Ensure that the method has a name when it was created. Cannot generate cache otherwise.
+  const cacheKey = method.name && method.name !== 'anonymous' && `${method.name}::${stableArgs}`
 
   const [state, setState] = React.useState(() => {
-    const result = getCachedResult()
+    const cachedResult = cacheKey && cache.retrieve<T>(cacheKey, caching.ttl)
     return {
-      result,
+      result: cachedResult,
       loading: !wait,
       error: null
     }
@@ -47,22 +30,19 @@ export function useQuery<T>(method: (args: {}) => Promise<T>, options?: QueryOpt
   const fetchQuery = React.useCallback(
     async (retryCount: number) => {
       if (wait) return
-      const cachedResult = getCachedResult()
+      const cachedResult = cacheKey && cache.retrieve<T>(cacheKey, caching.ttl)
       if (cachedResult) {
         setState((prevState) => ({ ...prevState, result: cachedResult }))
       } else {
         setState((prevState) => ({ ...prevState, loading: true }))
         try {
           const result = await method(args)
-          cache[cacheKey] = {
-            result,
-            cachedAt: Date.now()
-          }
+          cacheKey && cache.upsert(cacheKey, result)
           setState((prevState) => ({ ...prevState, loading: false, result }))
         } catch (error) {
           if (retryCount > 0) {
             await sleep(retryCount * 250)
-            return await fetchQuery(retryCount - 1)
+            await fetchQuery(retryCount - 1)
           } else {
             setState((prevState) => ({ ...prevState, loading: false, error }))
           }
@@ -80,8 +60,8 @@ export function useQuery<T>(method: (args: {}) => Promise<T>, options?: QueryOpt
   return {
     ...state,
     refresh: async (): Promise<void> => {
-      Reflect.deleteProperty(cache, cacheKey)
-      return await fetchQuery(retries)
+      cache.remove(cacheKey)
+      await fetchQuery(retries)
     }
   }
 }

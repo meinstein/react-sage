@@ -10,14 +10,14 @@ interface Resource {
 }
 
 const client = {
-  async getResource(): Promise<Resource> {
-    const response = await fetch('https://jsonplaceholder.typicode.com/todos/1')
+  async getResource({ id }: { id: number }): Promise<Resource> {
+    const response = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`)
     return await response.json()
   }
 }
 
 export const UseQueryDemo: React.FC = () => {
-  const query = useQuery<Resource>(client.getResource)
+  const query = useQuery(client.getResource, { args: { id: 1 } })
 
   if (query.loading) {
     return <div>Loading...</div>
