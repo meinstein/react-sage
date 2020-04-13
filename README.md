@@ -10,12 +10,12 @@ npm i react-sage
 ```
 
 ```jsx
-// Import specific hooks one by one.
-import { useForm } from 'react-sage/useForm'
-import { useQuery } from 'react-sage/useQuery'
-import { useMutation } from 'react-sage/useMutation'
-import { useFilePicker } from 'react-sage/useFilePicker'
-import { usePersistedState } from 'react-sage/usePersistedState'
+// Available hooks. See respective demos for more details (more below).
+import { useForm } from 'react-sage'
+import { useQuery } from 'react-sage'
+import { useMutation } from 'react-sage'
+import { useFilePicker } from 'react-sage'
+import { usePersistedState } from 'react-sage'
 ```
 
 ## Demo
