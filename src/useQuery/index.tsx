@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import { QueryOptions, QueryResult } from './types'
-import { sleep, Cache } from './utils'
+import { sleep, Cache, hashCode } from './utils'
 
 export * from './types'
 
@@ -15,11 +15,13 @@ export function useQuery<T>(
   const { wait = false, caching = {}, args = {}, retries = 0 } = options || {}
   // Generate a cache key
   const stableArgs = JSON.stringify(args, Object.keys(args).sort())
-  // Ensure that the method has a name when it was created. Cannot generate cache otherwise.
-  const cacheKey = method.name && method.name !== 'anonymous' && `${method.name}::${stableArgs}`
+  const stringifiedMethod = method.toString()
+  const cacheKey = React.useMemo(() => {
+    return hashCode(stringifiedMethod + stableArgs)
+  }, [stringifiedMethod, stableArgs])
 
   const [state, setState] = React.useState(() => {
-    const cachedResult = cacheKey && cache.retrieve<T>(cacheKey, caching.ttl)
+    const cachedResult = caching.refreshOnMount ? null : cache.retrieve<T>(cacheKey, caching.ttl)
     return {
       result: cachedResult,
       loading: !wait,
@@ -27,30 +29,27 @@ export function useQuery<T>(
     }
   })
 
-  const fetchQuery = React.useCallback(
-    async (retryCount: number) => {
-      if (wait) return
-      const cachedResult = cacheKey && cache.retrieve<T>(cacheKey, caching.ttl)
-      if (cachedResult) {
-        setState((prevState) => ({ ...prevState, result: cachedResult }))
-      } else {
-        setState((prevState) => ({ ...prevState, loading: true }))
-        try {
-          const result = await method(args)
-          cacheKey && cache.upsert(cacheKey, result)
-          setState((prevState) => ({ ...prevState, loading: false, result }))
-        } catch (error) {
-          if (retryCount > 0) {
-            await sleep(retryCount * 250)
-            await fetchQuery(retryCount - 1)
-          } else {
-            setState((prevState) => ({ ...prevState, loading: false, error }))
-          }
+  const fetchQuery = async (retryCount: number): Promise<void> => {
+    if (wait) return
+    const cachedResult = cache.retrieve<T>(cacheKey, caching.ttl)
+    if (cachedResult) {
+      setState((prevState) => ({ ...prevState, result: cachedResult }))
+    } else {
+      setState((prevState) => ({ ...prevState, loading: true }))
+      try {
+        const result = await method(args)
+        cache.upsert(cacheKey, result)
+        setState((prevState) => ({ ...prevState, loading: false, result }))
+      } catch (error) {
+        if (retryCount > 0) {
+          await sleep(retryCount * 250)
+          await fetchQuery(retryCount - 1)
+        } else {
+          setState((prevState) => ({ ...prevState, loading: false, error }))
         }
       }
-    },
-    [state.loading, state.result, state.error, cacheKey, wait]
-  )
+    }
+  }
 
   // This triggers on mount or when done waiting
   React.useEffect(() => {

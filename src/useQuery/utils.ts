@@ -7,6 +7,17 @@ export const sleep = (milliseconds: number): Promise<void> => {
   })
 }
 
+export const hashCode = (code: string): number => {
+  let hash = 0
+  for (let i = 0; i < code.length; i++) {
+    const character = code.charCodeAt(i)
+    hash = (hash << 5) - hash + character
+    // Convert to 32bit integer
+    hash = hash & hash
+  }
+  return hash
+}
+
 /**
  * Helper class for dealing with In-memory cache.
  */
@@ -21,29 +32,32 @@ export class Cache {
     this.cache = {}
   }
 
-  public upsert<T>(key: string, data: T): void {
+  public upsert<T>(key: string | number, data: T): void {
+    if (!key) return
     this.cache[key] = {
       data,
       cachedAt: Date.now()
     } as CacheItem<T>
   }
 
-  public retrieve<T>(key: string, ttl?: number): T | null {
+  public retrieve<T>(key: string | number, ttl?: number): T | null {
+    if (!key) return null
+
     const cachedItem = this.cache[key]
 
-    if (!cachedItem) return null
-
-    let data = cachedItem.data
-
-    if (ttl) {
-      // ttl is in seconds - convert to ms
-      data = Date.now() - cachedItem.cachedAt > ttl * 1000 ? null : data
+    if (!cachedItem) {
+      return null
     }
 
-    return data
+    // ttl is in seconds - convert to ms
+    if (ttl && Date.now() - cachedItem.cachedAt > ttl * 1000) {
+      return null
+    }
+
+    return cachedItem.data
   }
 
-  public remove(key: string): void {
+  public remove(key: string | number): void {
     Reflect.deleteProperty(this.cache, key)
   }
 

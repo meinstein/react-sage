@@ -67,7 +67,7 @@ export const useForm = (options?: FormOptions): Form => {
           ...prevFormState,
           [field]: {
             isDirty: true,
-            error: validators?.[field] ? !validators[field](value) : false,
+            error: validators?.[field] && validators[field](value),
             value
           }
         }
@@ -85,9 +85,11 @@ export const useForm = (options?: FormOptions): Form => {
   /**
    * Can be used by an individual input to determine its own error state.
    */
-  const getError = (key: string): boolean => {
+  const getError = (key: string): boolean | undefined | string => {
     // Only return error if field is dirty (ie, user has already given it a value)
-    return !!state?.[key]?.isDirty && state[key].error
+    // Otherwise, an field with a validator will display the error message at init time.
+    // Use "hasErrors" method to get holistic view of form validity.
+    return state?.[key]?.isDirty && state[key].error
   }
 
   /**

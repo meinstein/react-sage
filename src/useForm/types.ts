@@ -1,7 +1,7 @@
 import { UsePersistedStateStorageOptions } from '../usePersistedState/types'
 
 export interface Validators {
-  [key: string]: (value: string | number | boolean) => boolean
+  [key: string]: (value: string | number | boolean) => boolean | undefined | string
 }
 
 export interface PrettyFormData {
@@ -9,7 +9,7 @@ export interface PrettyFormData {
 }
 
 export interface FormValue {
-  error: boolean
+  error: boolean | undefined | string
   isDirty: boolean
   value: string | number | boolean
 }
@@ -23,7 +23,7 @@ export interface Form {
   set(field: string): (value: string | number | boolean) => void
   hasErrors: boolean
   data: PrettyFormData
-  getError(field: string): boolean
+  getError(field: string): boolean | undefined | string
   /**
    * Resets form state back to initialization period.
    */

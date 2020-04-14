@@ -10,39 +10,52 @@ enum Field {
 export const UseFormDemo: React.FC = () => {
   const [initialState, setInitialData] = React.useState({})
 
+  // Simulating a situation where initialState becomes avaialable async.
   React.useEffect(() => {
     window.setTimeout(() => {
       setInitialData({ [Field.FOO]: 'I am foo.' })
     }, 1000)
   }, [])
 
-  const { get, set, reset, clear, hasErrors } = useForm({
+  const { get, set, reset, getError, clear, hasErrors } = useForm({
     // Optional - can set initial state of certain form fields.
     initialState,
     // Optional - can persist form state. Accepts same config as usePersistedState.
     persistConfig: { key: 'demo-form', version: 1, storage: localStorage },
     // Optional - add validators for fields.
-    validators: { [Field.BAR]: Boolean, [Field.FOO]: Boolean }
+    validators: {
+      [Field.FOO]: Boolean,
+      [Field.BAR]: (val: string): boolean | string => {
+        return val?.length < 3 ? 'Must be more than 3 chars.' : null
+      }
+    }
   })
 
   return (
     <>
-      <input
-        type="text"
-        value={get(Field.FOO) as string}
-        onChange={(event): void => {
-          set(Field.FOO)(event.target.value)
-        }}
-      />
-      <input
-        type="text"
-        value={get(Field.BAR) as string}
-        onChange={(event): void => {
-          set(Field.BAR)(event.target.value)
-        }}
-      />
-      <button onClick={reset}>Reset</button>
-      <button onClick={clear}>Clear</button>
+      <div>
+        <input
+          type="text"
+          value={get(Field.FOO) as string}
+          onChange={(event): void => {
+            set(Field.FOO)(event.target.value)
+          }}
+        />
+      </div>
+      <div>
+        <input
+          type="text"
+          value={get(Field.BAR) as string}
+          onChange={(event): void => {
+            set(Field.BAR)(event.target.value)
+          }}
+        />
+        {getError(Field.BAR) && <b>{getError(Field.BAR)}</b>}
+      </div>
+      <div>
+        <button onClick={reset}>Reset</button>
+        <button onClick={clear}>Clear</button>
+      </div>
       <div>{hasErrors && <b>There is an error.</b>}</div>
     </>
   )
