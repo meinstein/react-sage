@@ -12,7 +12,6 @@ export const UsePersistedStateDemo: React.FC = () => {
 
   return (
     <>
-      <pre>This state is persisted: {state}</pre>
       <input
         type="text"
         value={state as string}
@@ -20,7 +19,7 @@ export const UsePersistedStateDemo: React.FC = () => {
           setState(() => event.target.value)
         }}
       />
-      <button onClick={remove}>Remove</button>
+      <button onClick={remove}>Remove Persisted State</button>
     </>
   )
 }

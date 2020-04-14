@@ -1,12 +1,16 @@
 import * as React from 'react'
 
-import { useQuery } from '.'
+import { useQuery, cache } from '.'
 
 interface Resource {
   userId: number
   id: number
   title: string
   completed: boolean
+}
+
+const getRandomInt = (max: number): number => {
+  return Math.floor(Math.random() * Math.floor(max)) + 1
 }
 
 const client = {
@@ -17,11 +21,28 @@ const client = {
 }
 
 export const UseQueryDemo: React.FC = () => {
-  const query = useQuery(client.getResource, { args: { id: 1 } })
+  const [id, setId] = React.useState(1)
+  const query = useQuery(client.getResource, { args: { id } })
 
   if (query.loading) {
     return <div>Loading...</div>
   }
 
-  return <pre>{query.result.title}</pre>
+  return (
+    <>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>
+        <b>Response:</b> {JSON.stringify(query.result)}
+      </pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>
+        <b>Cache:</b> {JSON.stringify(cache.cache)}
+      </pre>
+      <button
+        onClick={(): void => {
+          setId(getRandomInt(5))
+        }}
+      >
+        Refresh Query
+      </button>
+    </>
+  )
 }

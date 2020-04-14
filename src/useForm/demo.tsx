@@ -24,13 +24,13 @@ export const UseFormDemo: React.FC = () => {
     persistConfig: { key: 'demo-form', version: 1, storage: localStorage },
     // Optional - add validators for fields.
     validators: {
-      [Field.FOO]: Boolean,
+      [Field.FOO]: (val: string): boolean => !val,
       [Field.BAR]: (val: string): boolean | string => {
-        return val?.length < 3 ? 'Must be more than 3 chars.' : null
+        return (!val || val.length < 3) && 'Must be more than 3 chars.'
       }
     }
   })
-
+  console.log(getError(Field.BAR))
   return (
     <>
       <div>
@@ -41,6 +41,7 @@ export const UseFormDemo: React.FC = () => {
             set(Field.FOO)(event.target.value)
           }}
         />
+        <pre>Above field has error? {getError(Field.FOO) ? 'yes' : 'no'}</pre>
       </div>
       <div>
         <input
@@ -50,13 +51,13 @@ export const UseFormDemo: React.FC = () => {
             set(Field.BAR)(event.target.value)
           }}
         />
-        {getError(Field.BAR) && <b>{getError(Field.BAR)}</b>}
+        <pre>Above field has error? {getError(Field.BAR) || 'no'}</pre>
       </div>
+      <pre>Does overall form have errors? {hasErrors ? 'yes' : 'no'}</pre>
       <div>
-        <button onClick={reset}>Reset</button>
-        <button onClick={clear}>Clear</button>
+        <button onClick={reset}>Reset Form State</button>
+        <button onClick={clear}>Clear Form State</button>
       </div>
-      <div>{hasErrors && <b>There is an error.</b>}</div>
     </>
   )
 }

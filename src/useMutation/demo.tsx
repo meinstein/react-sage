@@ -24,8 +24,10 @@ const client = {
 }
 
 export const UseMutationDemo: React.FC = () => {
+  const [onSuccessMsg, setOnSuccessMsg] = React.useState('')
   const mutation = useMutation<Resource>(client.createResource, (data) => {
     console.log(data)
+    setOnSuccessMsg('Done!')
   })
 
   return (
@@ -41,7 +43,14 @@ export const UseMutationDemo: React.FC = () => {
       >
         Create Resource
       </button>
-      <pre>{JSON.stringify(mutation.result.response)}</pre>
+      <pre>
+        <b>Mutation onSuccessMsg:</b>
+        {onSuccessMsg}
+      </pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>
+        <b>Response: </b>
+        {JSON.stringify(mutation.result.response)}
+      </pre>
     </>
   )
 }

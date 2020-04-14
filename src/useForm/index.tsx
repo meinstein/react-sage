@@ -33,7 +33,7 @@ export const useForm = (options?: FormOptions): Form => {
         [field]: {
           // Check for existence of a validator for current field and apply it to initial state.
           // If no validator for the current field, then there is no error.
-          error: typeof validators[field] === 'function' && !validators[field](value),
+          error: typeof validators[field] === 'function' && validators[field](value),
           value: value,
           // Whether this field has been touched yet.
           isDirty: false
@@ -78,9 +78,7 @@ export const useForm = (options?: FormOptions): Form => {
   /**
    * Keeps track of whether there are ANY errors present in entire form state.
    */
-  const hasErrors = Object.keys(state || {})
-    .map((key: string) => state[key].error)
-    .some(Boolean)
+  const hasErrors = Object.keys(state || {}).some((key: string) => !!state[key].error)
 
   /**
    * Can be used by an individual input to determine its own error state.
