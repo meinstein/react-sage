@@ -8,6 +8,7 @@
     "build": "npm run clean && npm run lint && tsc",
     "clean": "rm -rf dist",
     "demo": "parcel demo/index.html --out-dir demo/output --no-cache",
+    "build:demo": "parcel build demo/index.html --out-dir demo/output --no-cache",
     "lint": "tsc --noEmit && eslint '*/**/*.{ts,tsx}' --quiet --fix",
     "prepublish": "npm run build",
     "test": "jest"
