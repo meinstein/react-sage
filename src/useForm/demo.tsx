@@ -30,7 +30,7 @@ export const UseFormDemo: React.FC = () => {
       }
     }
   })
-  console.log(getError(Field.BAR))
+
   return (
     <>
       <div>

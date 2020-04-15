@@ -12,11 +12,13 @@ export interface UseFileOptions extends UseFileImageDims {
   minFileSize?: number
   // Max file size in MB
   maxFileSize?: number
+  resizeImage?: boolean
+  imageQuality?: number
 }
 
 export interface UseFileErrors {
-  isFileSizeWrong?: boolean
-  isImageSizeWrong?: boolean
+  hasInvalidFileSize?: boolean
+  hasInvalidImage?: boolean
 }
 
 // For more about these attributes, see: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file
@@ -27,7 +29,7 @@ interface FileInputProps {
 }
 
 export interface UseFileResponse {
-  files: FileList | null
+  files: File[] | null
   /**
    * A click handler to pass to any element that needs to trigger the
    * native file picker.

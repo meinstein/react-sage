@@ -35,33 +35,54 @@ export const loadFile = (file: File): Promise<string> => {
 /**
  * Wraps native image loader API in a promise.
  */
-export const loadImage = (dataUrl: string, dims: UseFileImageDims): Promise<void> => {
+export const loadImage = (dataUrl: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     // create a new html image element
     const img = new Image()
     // set the image src attribute to our dataUrl
     img.src = dataUrl
-
     // listen for onload event
-    img.addEventListener(
-      'load',
-      () => {
-        if (
-          img.width < dims.minImageHeight ||
-          img.height < dims.minImageHeight ||
-          img.width > dims.maxImageWidth ||
-          img.height > dims.maxImageWidth
-        ) {
-          reject()
-        }
-
-        resolve()
-      },
-      false
-    )
-
+    img.addEventListener('load', () => resolve(img), false)
     img.addEventListener('error', (ev) => {
       reject(`Error loading image: ${ev}`)
     })
+  })
+}
+
+export const areImageDimsValid = (image: HTMLImageElement, dims?: UseFileImageDims): boolean => {
+  if (dims.minImageHeight && image.height < dims.minImageHeight) {
+    return false
+  }
+
+  if (dims.minImageWidth && image.width < dims.minImageHeight) {
+    return false
+  }
+
+  if (dims.maxImageHeight && image.height > dims.maxImageHeight) {
+    return false
+  }
+
+  if (dims.maxImageWidth && image.width > dims.maxImageWidth) {
+    return false
+  }
+
+  return true
+}
+
+export const resizeImage = (img: HTMLImageElement, maxSize: number, mime: string, quality = 0.92): Promise<Blob> => {
+  return new Promise((resolve) => {
+    let { width, height } = img
+    const maxDimension = Math.max(width, height)
+    if (maxDimension > maxSize) {
+      const scale = maxSize / maxDimension
+      width = scale * img.width
+      height = scale * img.height
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(img, 0, 0, width, height)
+    ctx.canvas.toBlob(resolve, mime, quality)
   })
 }
