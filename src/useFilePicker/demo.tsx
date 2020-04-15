@@ -1,21 +1,12 @@
 import * as React from 'react'
 
 import { useFilePicker } from '.'
-
-const previewFile = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.addEventListener('load', () => resolve(reader.result as string), false)
-    if (file) {
-      reader.readAsDataURL(file)
-    }
-  })
-}
+import { loadFile } from './utils'
 
 const MAX_FILE_SIZE = 1
 
 export const UseFilePickerDemo: React.FC = () => {
-  const [data, setData] = React.useState([])
+  const [dataUrls, setDataUrls] = React.useState([])
   const { files, onClick, errors, HiddenFileInput } = useFilePicker({
     maxFileSize: MAX_FILE_SIZE,
     maxImageWidth: 1000,
@@ -24,11 +15,11 @@ export const UseFilePickerDemo: React.FC = () => {
   })
 
   React.useEffect(() => {
-    const fetchDataURLs = async (): Promise<void> => {
-      const data = await Promise.all(files.map(previewFile))
-      setData(data)
+    const getDataUrls = async (): Promise<void> => {
+      const data = await Promise.all(files.map(loadFile))
+      setDataUrls(data)
     }
-    fetchDataURLs()
+    getDataUrls()
   }, [files.map((f) => f.name).join()])
 
   return (
@@ -44,7 +35,7 @@ export const UseFilePickerDemo: React.FC = () => {
         {errors.hasInvalidImage ? 'yes' : 'no'}
       </pre>
       <div>
-        {data.map((d, i) => (
+        {dataUrls.map((d, i) => (
           <img src={d} key={i} />
         ))}
       </div>

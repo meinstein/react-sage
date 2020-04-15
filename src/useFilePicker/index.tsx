@@ -5,6 +5,8 @@ import { loadFile, loadImage, areImageDimsValid, resizeImage as resizeImageUtil 
 
 export * from './types'
 
+const BYTES_PER_METABYTE = 1000000
+
 export const useFilePicker = ({
   minFileSize,
   maxFileSize,
@@ -30,14 +32,14 @@ export const useFilePicker = ({
 
     if (minFileSize) {
       // convert minSize from megabytes to bytes
-      const minBytes = minFileSize * 1000000
+      const minBytes = minFileSize * BYTES_PER_METABYTE
       const tooSmall = iterableFileList.some((file) => file.size < minBytes)
       setError((prevErrors) => ({ ...prevErrors, hasInvalidFileSize: tooSmall }))
     }
 
     if (maxFileSize) {
       // convert maxSize from megabytes to bytes
-      const maxBytes = maxFileSize * 1000000
+      const maxBytes = maxFileSize * BYTES_PER_METABYTE
       const tooBig = iterableFileList.some((file) => file.size > maxBytes)
       setError((prevErrors) => ({ ...prevErrors, hasInvalidFileSize: tooBig }))
     }

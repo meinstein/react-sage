@@ -43,9 +43,9 @@ export const UseMutationDemo: React.FC = () => {
       >
         Create Resource
       </button>
+      <pre>{mutation.result.loading && 'Loading...'}</pre>
       <pre>
-        <b>Mutation onSuccessMsg:</b>
-        {onSuccessMsg}
+        <b>On success callback:</b> {onSuccessMsg}
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>
         <b>Response: </b>

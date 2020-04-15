@@ -41,7 +41,9 @@ export const UseFormDemo: React.FC = () => {
             set(Field.FOO)(event.target.value)
           }}
         />
-        <pre>Above field has error? {getError(Field.FOO) ? 'yes' : 'no'}</pre>
+        <pre>
+          <b>Above field has error?</b> {getError(Field.FOO) ? 'yes' : 'no'}
+        </pre>
       </div>
       <div>
         <input
@@ -51,9 +53,13 @@ export const UseFormDemo: React.FC = () => {
             set(Field.BAR)(event.target.value)
           }}
         />
-        <pre>Above field has error? {getError(Field.BAR) || 'no'}</pre>
+        <pre>
+          <b>Above field has error?</b> {getError(Field.BAR) || 'no'}
+        </pre>
       </div>
-      <pre>Does overall form have errors? {hasErrors ? 'yes' : 'no'}</pre>
+      <pre>
+        <b>Does overall form have errors?</b> {hasErrors ? 'yes' : 'no'}
+      </pre>
       <div>
         <button onClick={reset}>Reset Form State</button>
         <button onClick={clear}>Clear Form State</button>
