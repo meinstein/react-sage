@@ -7,16 +7,17 @@ export * from './types'
 
 const BYTES_PER_METABYTE = 1000000
 
-export const useFilePicker = ({
-  minFileSize,
-  maxFileSize,
-  minImageWidth,
-  maxImageWidth,
-  minImageHeight,
-  maxImageHeight,
-  resizeImage,
-  imageQuality
-}: UseFileOptions): UseFileResponse => {
+export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => {
+  const {
+    minFileSize,
+    maxFileSize,
+    minImageWidth,
+    maxImageWidth,
+    minImageHeight,
+    maxImageHeight,
+    resizeImage,
+    imageQuality
+  } = options
   const fileInputRef = React.useRef(undefined)
   const [files, setFileList] = React.useState<File[] | null>([])
   const [errors, setError] = React.useState<UseFileErrors>({})
