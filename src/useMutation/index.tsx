@@ -4,7 +4,6 @@ import { UseMutation } from './types'
 
 export * from './types'
 
-// https://stackoverflow.com/questions/38598280/is-it-possible-to-wrap-a-function-and-retain-its-types
 export function useMutation<T, U>(
   method: (...args: T[]) => Promise<U>,
   onSuccess?: (res: U) => void
