@@ -57,8 +57,8 @@ export function usePersistedState<S>({
 
   const remove = (): void => {
     try {
-      storage.removeItem(storageKey)
       setState(initialState)
+      storage.removeItem(storageKey)
     } catch (err) {
       console.log(err)
     }

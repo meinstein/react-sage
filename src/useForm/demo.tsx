@@ -8,27 +8,13 @@ enum Field {
 }
 
 export const UseFormDemo: React.FC = () => {
-  const [initialState, setInitialData] = React.useState({})
-
-  // Simulating a situation where initialState becomes avaialable async.
-  React.useEffect(() => {
-    window.setTimeout(() => {
-      setInitialData({ [Field.FOO]: 'I am foo.' })
-    }, 1000)
-  }, [])
-
-  const { get, set, reset, getError, clear, hasErrors } = useForm({
-    // Optional - can set initial state of certain form fields.
-    initialState,
+  const { get, set, reset, getError, hasErrors } = useForm({
+    // Required - Set initial state with all expected form fields.
+    initialState: { [Field.FOO]: 'I am foo.', [Field.BAR]: 0 },
     // Optional - can persist form state. Accepts same config as usePersistedState.
     persistConfig: { key: 'demo-form', version: 1, storage: localStorage },
     // Optional - add validators for fields.
-    validators: {
-      [Field.FOO]: (val: string): boolean => !val,
-      [Field.BAR]: (val: string): boolean | string => {
-        return (!val || val.length < 3) && 'Must be more than 3 chars.'
-      }
-    }
+    validators: { [Field.FOO]: (val): boolean => !val }
   })
 
   return (
@@ -36,23 +22,27 @@ export const UseFormDemo: React.FC = () => {
       <div>
         <input
           type="text"
-          value={get(Field.FOO) as string}
+          value={get(Field.FOO)}
           onChange={(event): void => {
             set(Field.FOO)(event.target.value)
           }}
         />
+        <span>(required)</span>
         <pre>
           <b>Above field has error?</b> {getError(Field.FOO) ? 'yes' : 'no'}
         </pre>
       </div>
       <div>
         <input
-          type="text"
-          value={get(Field.BAR) as string}
+          min="0"
+          max="10"
+          type="number"
+          value={get(Field.BAR)}
           onChange={(event): void => {
             set(Field.BAR)(event.target.value)
           }}
         />
+        <span>(optional)</span>
         <pre>
           <b>Above field has error?</b> {getError(Field.BAR) || 'no'}
         </pre>
@@ -61,8 +51,7 @@ export const UseFormDemo: React.FC = () => {
         <b>Does overall form have errors?</b> {hasErrors ? 'yes' : 'no'}
       </pre>
       <div>
-        <button onClick={reset}>Reset Form State</button>
-        <button onClick={clear}>Clear Form State</button>
+        <button onClick={reset}>Reset Form</button>
       </div>
     </>
   )

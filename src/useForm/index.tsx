@@ -1,45 +1,39 @@
 import * as React from 'react'
 
-import { Form, FormState, FormOptions, PrettyFormData } from './types'
+import { UseForm, UseFormState, UseFormOptions, UseFormData } from './types'
 import { usePersistedState } from '../usePersistedState'
 
 export * from './types'
 
-export const useForm = (options?: FormOptions): Form => {
-  const { persistConfig, initialState = {}, validators = {} } = options
+export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
+  const { persistConfig, initialState, validators } = options
   const [state, setState, removePersistedState] = persistConfig
-    ? usePersistedState<FormState>(persistConfig)
-    : React.useState<FormState>()
+    ? usePersistedState<UseFormState<T>>(persistConfig)
+    : React.useState<UseFormState<T>>()
 
   /**
    * Removes form metadata and simply returns { field: value }
    */
-  const data: PrettyFormData = Object.keys(state || {}).reduce(
-    (accumulatedState, field) => ({
-      ...accumulatedState,
+  const data = Object.keys(state || {}).reduce(
+    (prevState, field) => ({
+      ...prevState,
       [field]: state[field].value
     }),
-    {}
+    {} as UseFormData<T>
   )
 
   const initForm = (): void => {
-    // Note: Spreading in initialState after data ensures that initialState is always king.
-    const allInitialState = { ...data, ...initialState }
-    const allFields = [...Object.keys(validators), ...Object.keys(allInitialState)]
-    const startData = allFields.reduce((accumulatedState, field) => {
-      const value = allInitialState[field] || ''
-      return {
-        ...accumulatedState,
-        [field]: {
-          // Check for existence of a validator for current field and apply it to initial state.
-          // If no validator for the current field, then there is no error.
-          error: typeof validators[field] === 'function' && validators[field](value),
-          value: value,
-          // Whether this field has been touched yet.
-          isDirty: false
-        }
+    const startData = {} as UseFormState<T>
+    for (const [field, value] of Object.entries({ ...initialState, ...data })) {
+      startData[field] = {
+        value,
+        // Whether this field has been touched yet.
+        isDirty: false,
+        // Check for existence of a validator for current field and apply it to initial state.
+        // If no validator for the current field, then there is no error.
+        error: validators[field] && validators[field](value)
       }
-    }, {})
+    }
     setState(() => startData)
   }
 
@@ -48,21 +42,21 @@ export const useForm = (options?: FormOptions): Form => {
    */
   React.useEffect(() => {
     initForm()
-  }, [Object.keys(initialState).length])
+  }, [Object.keys(state || {}).length])
 
   /**
    * This getter is utilized by inputs to grab its own state from the form.
    */
-  const get = (field: string): string | number | boolean => {
-    return state?.[field]?.value || ''
+  const get = (field: keyof T): T[keyof T] => {
+    return state?.[field]?.value
   }
 
   /**
    * This setter it utilized by inputs to update its own part in the form state.
    */
-  const set = (field: string) => {
-    return (value: string | number | boolean): void => {
-      setState((prevFormState: FormState) => {
+  const set = (field: keyof T) => {
+    return (value: T[keyof T]): void => {
+      setState((prevFormState) => {
         return {
           ...prevFormState,
           [field]: {
@@ -78,12 +72,12 @@ export const useForm = (options?: FormOptions): Form => {
   /**
    * Keeps track of whether there are ANY errors present in entire form state.
    */
-  const hasErrors = Object.keys(state || {}).some((key: string) => !!state[key].error)
+  const hasErrors = Object.keys(state || {}).some((key) => !!state[key].error)
 
   /**
    * Can be used by an individual input to determine its own error state.
    */
-  const getError = (key: string): boolean | undefined | string => {
+  const getError = (key: keyof T): boolean | undefined | string => {
     // Only return error if field is dirty (ie, user has already given it a value)
     // Otherwise, an field with a validator will display the error message at init time.
     // Use "hasErrors" method to get holistic view of form validity.
@@ -94,20 +88,12 @@ export const useForm = (options?: FormOptions): Form => {
    * Resets form state back to initialization period.
    */
   const reset = (): void => {
-    setState(() => ({}))
-    initForm()
-  }
-
-  /**
-   * Wipes out all form state.
-   */
-  const clear = (): void => {
     if (removePersistedState) {
       removePersistedState()
     } else {
-      setState(() => ({}))
+      setState(() => null)
     }
   }
 
-  return { get, set, hasErrors, getError, data, reset, clear }
+  return { get, set, hasErrors, getError, data, reset }
 }

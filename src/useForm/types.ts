@@ -1,41 +1,29 @@
 import { UsePersistedStateStorageOptions } from '../usePersistedState/types'
 
-export interface Validators {
-  [key: string]: (value: string | number | boolean) => boolean | undefined | string
+export type UseFormState<T> = {
+  [P in keyof T]: {
+    error: boolean | undefined | string
+    isDirty: boolean
+    value: T[P]
+  }
 }
 
-export interface PrettyFormData {
-  [key: string]: string | number | boolean
-}
+export type UseFormData<T> = { [P in keyof T]: T[P] } | null
 
-export interface FormValue {
-  error: boolean | undefined | string
-  isDirty: boolean
-  value: string | number | boolean
-}
-
-export interface FormState {
-  [key: string]: FormValue
-}
-
-export interface Form {
-  get(field: string): string | number | boolean | undefined
-  set(field: string): (value: string | number | boolean) => void
+export interface UseForm<T> {
+  get(field: keyof T): T[keyof T]
+  set(field: keyof T): (val: T[keyof T]) => void
   hasErrors: boolean
-  data: PrettyFormData
-  getError(field: string): boolean | undefined | string
-  /**
-   * Resets form state back to initialization period.
-   */
+  data: UseFormData<T>
+  getError(field: keyof T): boolean | undefined | string
+  // Resets form state back to initialization period.
   reset(): void
-  /**
-   * Removes all form state.
-   */
-  clear(): void
 }
 
-export interface FormOptions {
+export interface UseFormOptions<T> {
+  initialState: T
   persistConfig?: UsePersistedStateStorageOptions
-  initialState?: PrettyFormData
-  validators?: Validators
+  validators?: {
+    [P in keyof T]?: (value: T[P]) => boolean | undefined | string
+  }
 }
