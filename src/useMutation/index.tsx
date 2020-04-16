@@ -1,13 +1,14 @@
 import * as React from 'react'
 
-import { MutationResponse } from './types'
+import { UseMutation } from './types'
 
 export * from './types'
 
-export function useMutation<T>(
-  method: (...args: Array<string | number | boolean | {}>) => Promise<T>,
-  onSuccess?: (response: T) => void
-): MutationResponse<T> {
+// https://stackoverflow.com/questions/38598280/is-it-possible-to-wrap-a-function-and-retain-its-types
+export function useMutation<T, U>(
+  method: (...args: T[]) => Promise<U>,
+  onSuccess?: (res: U) => void
+): UseMutation<T, U> {
   const [result, setResult] = React.useState({
     response: null,
     loading: false,
@@ -15,10 +16,10 @@ export function useMutation<T>(
   })
 
   const invoke = React.useCallback(
-    async (...args: Array<string | number | boolean | {}>) => {
+    async (params) => {
       setResult((prevState) => ({ ...prevState, loading: true }))
       try {
-        const response = await method(args)
+        const response = await method(...params)
         if (response) {
           setResult((prevState) => ({
             ...prevState,

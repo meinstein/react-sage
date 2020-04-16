@@ -2,18 +2,20 @@ import * as React from 'react'
 
 import { useMutation } from '.'
 
-interface Resource {
-  id: number
+interface ResourceCreationParams {
   title: string
   body: string
   userId: number
 }
+interface Resource {
+  id: number
+}
 
 const client = {
-  async createResource(resource: Resource): Promise<Resource> {
+  async createResource(params: ResourceCreationParams): Promise<Resource> {
     const args = {
       method: 'POST',
-      body: JSON.stringify(resource),
+      body: JSON.stringify(params),
       headers: {
         'Content-type': 'application/json; charset=UTF-8'
       }
@@ -25,9 +27,9 @@ const client = {
 
 export const UseMutationDemo: React.FC = () => {
   const [onSuccessMsg, setOnSuccessMsg] = React.useState('')
-  const mutation = useMutation<Resource>(client.createResource, (data) => {
+  const mutation = useMutation(client.createResource, (data) => {
     console.log(data)
-    setOnSuccessMsg('Done!')
+    setOnSuccessMsg('Mutation successful!')
   })
 
   return (
@@ -43,7 +45,7 @@ export const UseMutationDemo: React.FC = () => {
       >
         Create Resource
       </button>
-      <pre>{mutation.result.loading && 'Loading...'}</pre>
+      {<pre>{mutation.result.loading ? 'Mutation loading...' : 'Mutation ready for action!'}</pre>}
       <pre>
         <b>On success callback:</b> {onSuccessMsg}
       </pre>
