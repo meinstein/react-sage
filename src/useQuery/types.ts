@@ -1,18 +1,18 @@
-export interface CachingOptions {
+export interface UseQueryCaching {
   refreshOnMount?: boolean
   // in seconds
   ttl?: number
 }
 
-export interface QueryOptions {
+export interface UseQueryOptions<T> {
   wait?: boolean
-  args?: {}
-  caching?: CachingOptions
+  args?: T | null
+  caching?: UseQueryCaching
   retries?: number
 }
 
-export interface QueryResult<T> {
-  result: T | null
+export interface UseQueryResult<U> {
+  result: U | null
   error: Error | null
   loading: boolean
   refresh: () => Promise<void>

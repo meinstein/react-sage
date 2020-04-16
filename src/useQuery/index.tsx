@@ -1,18 +1,15 @@
 import * as React from 'react'
 
-import { QueryOptions, QueryResult } from './types'
+import { UseQueryOptions, UseQueryResult } from './types'
 import { sleep, Cache, hashCode } from './utils'
 
 export * from './types'
 
 export const cache = new Cache()
 
-export function useQuery<T>(
-  method: (...args: Array<string | number | boolean | {}>) => Promise<T>,
-  options?: QueryOptions
-): QueryResult<T> {
+export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQueryOptions<T>): UseQueryResult<U> {
   // Parse out and create defaults for options
-  const { wait = false, caching = {}, args = {}, retries = 0 } = options || {}
+  const { wait = false, caching = {}, args, retries = 0 } = options || {}
   // Generate a cache key
   const stableArgs = JSON.stringify(args, Object.keys(args).sort())
   const stringifiedMethod = method.toString()
@@ -21,7 +18,7 @@ export function useQuery<T>(
   }, [stringifiedMethod, stableArgs])
 
   const [state, setState] = React.useState(() => {
-    const cachedResult = caching.refreshOnMount ? null : cache.retrieve<T>(cacheKey, caching.ttl)
+    const cachedResult = caching.refreshOnMount ? null : cache.retrieve<U>(cacheKey, caching.ttl)
     return {
       result: cachedResult,
       loading: !wait,
@@ -31,7 +28,7 @@ export function useQuery<T>(
 
   const fetchQuery = async (retryCount: number): Promise<void> => {
     if (wait) return
-    const cachedResult = cache.retrieve<T>(cacheKey, caching.ttl)
+    const cachedResult = cache.retrieve<U>(cacheKey, caching.ttl)
     if (cachedResult) {
       setState((prevState) => ({ ...prevState, result: cachedResult }))
     } else {
