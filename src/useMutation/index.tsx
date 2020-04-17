@@ -15,7 +15,7 @@ export function useMutation<T, U>(
   })
 
   const invoke = React.useCallback(
-    async (params) => {
+    async (...params) => {
       setResult((prevState) => ({ ...prevState, loading: true }))
       try {
         const response = await method(...params)
