@@ -11,12 +11,9 @@ export type UseFormState<T> = {
 export type UseFormData<T> = { [P in keyof T]: T[P] } | null
 
 export interface UseForm<T> {
-  get(field: keyof T): T[keyof T]
-  set(field: keyof T): (val: T[keyof T]) => void
+  set(updatedFields: { [P in keyof T]?: T[P] }): void
   hasErrors: boolean
-  data: UseFormData<T>
-  getError(field: keyof T): boolean | undefined | string
-  // Resets form state back to initialization period.
+  data: UseFormState<T>
   reset(): void
 }
 

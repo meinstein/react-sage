@@ -2,34 +2,31 @@ import * as React from 'react'
 
 import { useForm } from '.'
 
-enum Field {
-  FOO = 'foo',
-  BAR = 'bar'
-}
-
 export const UseFormDemo: React.FC = () => {
-  const { get, set, reset, getError, hasErrors } = useForm({
+  const { set, reset, hasErrors, data } = useForm({
     // Required - Set initial state with all expected form fields.
-    initialState: { [Field.FOO]: 'I am foo.', [Field.BAR]: 0 },
+    initialState: { foo: 'I am foo.', bar: 0 },
     // Optional - can persist form state. Accepts same config as usePersistedState.
     persistConfig: { key: 'demo-form', version: 1, storage: localStorage },
     // Optional - add validators for fields.
-    validators: { [Field.FOO]: (val): boolean => !val }
+    validators: { foo: (val): boolean => !val }
   })
+
+  const { foo, bar } = data
 
   return (
     <>
       <div>
         <input
           type="text"
-          value={get(Field.FOO)}
+          value={foo.value}
           onChange={(event): void => {
-            set(Field.FOO)(event.target.value)
+            set({ foo: event.target.value })
           }}
         />
         <span>(required)</span>
         <pre>
-          <b>Above field has error?</b> {getError(Field.FOO) ? 'yes' : 'no'}
+          <b>Above field has error?</b> {foo.error ? 'yes' : 'no'}
         </pre>
       </div>
       <div>
@@ -37,14 +34,14 @@ export const UseFormDemo: React.FC = () => {
           min="0"
           max="10"
           type="number"
-          value={get(Field.BAR)}
+          value={bar.value}
           onChange={(event): void => {
-            set(Field.BAR)(event.target.value)
+            set({ bar: parseInt(event.target.value, 10) })
           }}
         />
         <span>(optional)</span>
         <pre>
-          <b>Above field has error?</b> {getError(Field.BAR) || 'no'}
+          <b>Above field has error?</b> {bar.error || 'no'}
         </pre>
       </div>
       <pre>
