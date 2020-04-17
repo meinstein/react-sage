@@ -26,6 +26,9 @@ export const UseFormDemo: React.FC = () => {
         />
         <span>(required)</span>
         <pre>
+          <b>Above field is dirty?</b> {foo.isDirty ? 'yes' : 'no'}
+        </pre>
+        <pre>
           <b>Above field has error?</b> {foo.error ? 'yes' : 'no'}
         </pre>
       </div>
@@ -40,6 +43,9 @@ export const UseFormDemo: React.FC = () => {
           }}
         />
         <span>(optional)</span>
+        <pre>
+          <b>Above field is dirty?</b> {bar.isDirty ? 'yes' : 'no'}
+        </pre>
         <pre>
           <b>Above field has error?</b> {bar.error || 'no'}
         </pre>

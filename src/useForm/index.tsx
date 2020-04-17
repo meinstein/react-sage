@@ -6,13 +6,12 @@ import { usePersistedState } from '../usePersistedState'
 export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
   const { persistConfig, initialState, validators } = options
 
-  const createFormState = (formData: UseFormData<T>): UseFormState<T> => {
+  const createFormState = (formData: UseFormData<T>, isDirty: boolean): UseFormState<T> => {
     const formState = {} as UseFormState<T>
     for (const [field, value] of Object.entries(formData)) {
       formState[field] = {
         value,
-        // Whether this field has been touched yet.
-        isDirty: false,
+        isDirty,
         // Check for existence of a validator for current field and apply it to initial state.
         // If no validator for the current field, then there is no error.
         error: validators[field] && validators[field](value)
@@ -22,8 +21,8 @@ export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
   }
 
   const [state, setState, removePersistedState] = persistConfig
-    ? usePersistedState<UseFormState<T>>({ ...persistConfig, initialState: createFormState(initialState) })
-    : React.useState<UseFormState<T>>(createFormState(initialState))
+    ? usePersistedState<UseFormState<T>>({ ...persistConfig, initialState: createFormState(initialState, false) })
+    : React.useState<UseFormState<T>>(createFormState(initialState, false))
 
   /**
    * This setter it utilized by inputs to update its own part in the form state.
@@ -32,7 +31,7 @@ export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
     setState((prevFormState) => {
       return {
         ...prevFormState,
-        ...createFormState(updatedFields)
+        ...createFormState(updatedFields, true)
       }
     })
   }
