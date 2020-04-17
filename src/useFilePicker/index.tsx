@@ -3,8 +3,6 @@ import * as React from 'react'
 import { UseFileOptions, UseFileResponse, UseFileErrors } from './types'
 import { loadFile, loadImage, areImageDimsValid, resizeImage as resizeImageUtil } from './utils'
 
-export * from './types'
-
 const BYTES_PER_METABYTE = 1000000
 
 export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => {

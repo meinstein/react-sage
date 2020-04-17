@@ -1,5 +1,7 @@
-export * from './useFilePicker'
-export * from './useForm'
-export * from './useMutation'
-export * from './usePersistedState'
-export * from './useQuery'
+export { useFilePicker } from './useFilePicker'
+// Nice helper to expose
+export { loadFile } from './useFilePicker/utils'
+export { useForm } from './useForm'
+export { useMutation } from './useMutation'
+export { usePersistedState } from './usePersistedState'
+export { useQuery } from './useQuery'

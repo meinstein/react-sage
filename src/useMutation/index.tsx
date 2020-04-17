@@ -2,8 +2,6 @@ import * as React from 'react'
 
 import { UseMutation } from './types'
 
-export * from './types'
-
 export function useMutation<T, U>(
   method: (...args: T[]) => Promise<U>,
   onSuccess?: (res: U) => void

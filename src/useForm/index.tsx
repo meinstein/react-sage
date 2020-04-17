@@ -3,8 +3,6 @@ import * as React from 'react'
 import { UseForm, UseFormState, UseFormOptions, UseFormData } from './types'
 import { usePersistedState } from '../usePersistedState'
 
-export * from './types'
-
 export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
   const { persistConfig, initialState, validators } = options
 

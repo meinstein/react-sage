@@ -2,8 +2,6 @@ import * as React from 'react'
 
 import { UsePersistedStateOptions, Dispatch, SetStateAction, PersistedStateData } from './types'
 
-export * from './types'
-
 function formatForStorage<S>(version: number, data: S): PersistedStateData<S> {
   return {
     version,

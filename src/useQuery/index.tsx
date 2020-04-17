@@ -3,8 +3,6 @@ import * as React from 'react'
 import { UseQueryOptions, UseQueryResult } from './types'
 import { sleep, Cache, hashCode } from './utils'
 
-export * from './types'
-
 export const cache = new Cache()
 
 export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQueryOptions<T>): UseQueryResult<U> {
