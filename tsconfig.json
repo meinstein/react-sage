@@ -2,7 +2,7 @@
   "compilerOptions": {
     "outDir": "./dist/",
     "pretty": true,
-    "module": "es6",
+    "module": "commonjs",
     "target": "es5",
     "jsx": "react",
     "lib": ["dom", "es2017"],
