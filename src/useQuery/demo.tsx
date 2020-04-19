@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { useQuery, cache } from '.'
 
-interface Resource {
+export interface Resource {
   userId: number
   id: number
   title: string

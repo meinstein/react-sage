@@ -9,7 +9,7 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
   // Parse out and create defaults for options
   const { wait = false, caching = {}, args, retries = 0 } = options || {}
   // Generate a cache key
-  const stableArgs = JSON.stringify(args, Object.keys(args).sort())
+  const stableArgs = JSON.stringify(args, Object.keys(args || {}).sort())
   const stringifiedMethod = method.toString()
   const cacheKey = React.useMemo(() => {
     return hashCode(stringifiedMethod + stableArgs)
