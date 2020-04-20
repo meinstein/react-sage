@@ -15,8 +15,12 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
     return hashCode(stringifiedMethod + stableArgs)
   }, [stringifiedMethod, stableArgs])
 
+  const retrieveCachedResult = (): U | null => {
+    return caching.refreshOnMount ? null : cache.retrieve<U>(cacheKey, caching.ttl)
+  }
+
   const [state, setState] = React.useState(() => {
-    const cachedResult = caching.refreshOnMount ? null : cache.retrieve<U>(cacheKey, caching.ttl)
+    const cachedResult = retrieveCachedResult()
     return {
       result: cachedResult,
       loading: !wait,
@@ -26,7 +30,7 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
 
   const fetchQuery = async (retryCount: number): Promise<void> => {
     if (wait) return
-    const cachedResult = cache.retrieve<U>(cacheKey, caching.ttl)
+    const cachedResult = retrieveCachedResult()
     if (cachedResult) {
       setState((prevState) => ({ ...prevState, result: cachedResult }))
     } else {

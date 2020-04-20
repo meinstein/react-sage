@@ -21,6 +21,6 @@ export interface UseFormOptions<T> {
   initialState: T
   persistConfig?: UsePersistedStateStorageOptions
   validators?: {
-    [P in keyof T]?: (value: T[P]) => boolean | undefined | string
+    [P in keyof T]?: (value: T[P], prevFormState: UseFormState<T> | null) => boolean | undefined | string
   }
 }
