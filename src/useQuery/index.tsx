@@ -23,7 +23,7 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
     const cachedResult = retrieveCachedResult()
     return {
       result: cachedResult,
-      loading: !cachedResult || !wait,
+      loading: cachedResult ? false : !wait,
       error: null
     }
   })
