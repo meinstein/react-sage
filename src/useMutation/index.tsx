@@ -25,11 +25,8 @@ export function useMutation<T, U>(
       } catch (error) {
         setResult((prevState) => ({
           ...prevState,
-          loading: false,
-          error: {
-            ...error,
-            message: error.message
-          }
+          error,
+          loading: false
         }))
       }
     },
