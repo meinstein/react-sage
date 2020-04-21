@@ -17,19 +17,19 @@ export function useMutation<T, U>(
       setResult((prevState) => ({ ...prevState, loading: true }))
       try {
         const response = await method(...params)
-        if (response) {
-          setResult((prevState) => ({
-            ...prevState,
-            // Either use response OR set to true so onSuccess callback gets invoked.
-            response,
-            loading: false
-          }))
-        }
+        setResult((prevState) => ({
+          ...prevState,
+          response,
+          loading: false
+        }))
       } catch (error) {
         setResult((prevState) => ({
           ...prevState,
           loading: false,
-          error: { ...error, message: error.message }
+          error: {
+            ...error,
+            message: error.message
+          }
         }))
       }
     },
