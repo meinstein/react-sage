@@ -23,6 +23,10 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
   const onChange = async (fileList: FileList): Promise<void> => {
     if (!fileList || !fileList.length) return
 
+    // Scrub previous data from state
+    setError(() => ({}))
+    setFileList([])
+
     // Convert native file list to iterable. Much easier to work with.
     let iterableFileList = Array.from(fileList) as File[]
 
@@ -30,17 +34,28 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
       // convert minSize from megabytes to bytes
       const minBytes = minFileSize * BYTES_PER_METABYTE
       const tooSmall = iterableFileList.some((file) => file.size < minBytes)
-      setError((prevErrors) => ({ ...prevErrors, hasInvalidFileSize: tooSmall }))
+      setError((prevErrors) => ({
+        ...prevErrors,
+        hasInvalidFileSize: tooSmall
+      }))
     }
 
     if (maxFileSize) {
       // convert maxSize from megabytes to bytes
       const maxBytes = maxFileSize * BYTES_PER_METABYTE
       const tooBig = iterableFileList.some((file) => file.size > maxBytes)
-      setError((prevErrors) => ({ ...prevErrors, hasInvalidFileSize: tooBig }))
+      setError((prevErrors) => ({
+        ...prevErrors,
+        hasInvalidFileSize: tooBig
+      }))
     }
 
-    const dims = { minImageWidth, maxImageWidth, minImageHeight, maxImageHeight }
+    const dims = {
+      minImageWidth,
+      maxImageWidth,
+      minImageHeight,
+      maxImageHeight
+    }
     // Is there at least one dim to care about?
     if (Object.values(dims).some(Boolean)) {
       try {
@@ -61,33 +76,43 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
           )
           iterableFileList = resizedImageBlobs.map((blob, index) => {
             const fileName = iterableFileList[index].name
-            return new File([blob], fileName, { lastModified: Date.now() })
+            return new File([blob], fileName, {
+              lastModified: Date.now()
+            })
           })
-          setError((prevErrors) => ({ ...prevErrors, hasInvalidImage: false }))
+          setError((prevErrors) => ({
+            ...prevErrors,
+            hasInvalidImage: false
+          }))
         } else if (hasImageWithInvalidDims) {
-          setError((prevErrors) => ({ ...prevErrors, hasInvalidImage: true }))
+          setError((prevErrors) => ({
+            ...prevErrors,
+            hasInvalidImage: true
+          }))
         } else {
-          setError((prevErrors) => ({ ...prevErrors, hasInvalidImage: false }))
+          setError((prevErrors) => ({
+            ...prevErrors,
+            hasInvalidImage: false
+          }))
         }
       } catch (err) {
-        setError((prevErrors) => ({ ...prevErrors, hasInvalidImage: true }))
+        setError((prevErrors) => ({
+          ...prevErrors,
+          hasInvalidImage: true
+        }))
       }
     }
 
     setFileList(iterableFileList)
+    if (fileInputRef?.current) {
+      fileInputRef.current.value = null
+    }
   }
 
   return {
     files,
     errors,
     onClick(): void {
-      // Scrub previous data from state
-      setError(() => ({}))
-      setFileList([])
-      // Scrub previous data from input el
-      if (fileInputRef?.current) {
-        fileInputRef.current.value = null
-      }
       fileInputRef?.current?.click()
     },
     HiddenFileInput({ multiple, accept }): React.ReactElement {
