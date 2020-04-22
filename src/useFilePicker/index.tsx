@@ -23,9 +23,6 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
   const onChange = async (fileList: FileList): Promise<void> => {
     if (!fileList || !fileList.length) return
 
-    // Scrub previous errors
-    setError(() => ({}))
-
     // Convert native file list to iterable. Much easier to work with.
     let iterableFileList = Array.from(fileList) as File[]
 
@@ -84,6 +81,13 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
     files,
     errors,
     onClick(): void {
+      // Scrub previous data from state
+      setError(() => ({}))
+      setFileList([])
+      // Scrub previous data from input el
+      if (fileInputRef?.current) {
+        fileInputRef.current.value = null
+      }
       fileInputRef?.current?.click()
     },
     HiddenFileInput({ multiple, accept }): React.ReactElement {
