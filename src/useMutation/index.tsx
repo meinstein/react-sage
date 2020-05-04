@@ -4,7 +4,8 @@ import { UseMutation } from './types'
 
 export function useMutation<T, U>(
   method: (...args: T[]) => Promise<U>,
-  onSuccess?: (res: U) => void
+  onSuccess?: (res: U) => void,
+  onError?: (err: Error | null) => void
 ): UseMutation<T, U> {
   const [result, setResult] = React.useState({
     response: null,
@@ -38,6 +39,12 @@ export function useMutation<T, U>(
       onSuccess(result.response)
     }
   }, [result.response])
+
+  React.useEffect(() => {
+    if (onError && result.error) {
+      onError(result.error)
+    }
+  }, [result.error])
 
   return {
     result,

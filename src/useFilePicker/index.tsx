@@ -104,6 +104,8 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
     }
 
     setFileList(iterableFileList)
+
+    // Free up the file input again.
     if (fileInputRef?.current) {
       fileInputRef.current.value = null
     }
