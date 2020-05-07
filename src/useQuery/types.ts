@@ -1,5 +1,7 @@
 export interface UseQueryCaching {
-  refreshOnMount?: boolean
+  // A unique key to store the query in the caching layer.
+  // The final caching key is a combination of this key + the args passed to the method.
+  key?: string
   // in seconds
   ttl?: number
 }
