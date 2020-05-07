@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import { UseQueryOptions, UseQueryResult } from './types'
-import { sleep, Cache, hashCode } from './utils'
+import { sleep, Cache } from './utils'
 
 export const cache = new Cache()
 
@@ -10,13 +10,9 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
   const { wait = false, caching = {}, args, retries = 0 } = options || {}
   // Generate a cache key
   const stableArgs = JSON.stringify(args, Object.keys(args || {}).sort())
-  const stringifiedMethod = method.toString()
-  const cacheKey = React.useMemo(() => {
-    return hashCode(stringifiedMethod + stableArgs)
-  }, [stringifiedMethod, stableArgs])
-
+  const cacheKey = caching.key ? `${caching.key}::${stableArgs}` : null
   const retrieveCachedResult = (): U | null => {
-    return caching.refreshOnMount ? null : cache.retrieve<U>(cacheKey, caching.ttl)
+    return cache.retrieve<U>(cacheKey, caching.ttl)
   }
 
   const [state, setState] = React.useState(() => {
@@ -53,7 +49,7 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
   // This triggers on mount or when done waiting
   React.useEffect(() => {
     fetchQuery(retries)
-  }, [cacheKey, wait])
+  }, [cacheKey, wait, stableArgs])
 
   return {
     ...state,

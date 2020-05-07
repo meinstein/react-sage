@@ -22,7 +22,7 @@ const client = {
 
 export const UseQueryDemo: React.FC = () => {
   const [id, setId] = React.useState(1)
-  const query = useQuery(client.getResource, { args: { id } })
+  const query = useQuery(client.getResource, { args: { id }, caching: { key: 'getResource', ttl: 10 } })
 
   return (
     <>
