@@ -11,7 +11,7 @@ interface Resource {
   id: number
 }
 
-const client = {
+export const client = {
   async createResource(params: ResourceCreationParams): Promise<Resource> {
     const args = {
       method: 'POST',
@@ -28,8 +28,8 @@ const client = {
 export const UseMutationDemo: React.FC = () => {
   const [onSuccessMsg, setOnSuccessMsg] = React.useState('')
   const mutation = useMutation(client.createResource, (data) => {
-    console.log(data)
-    setOnSuccessMsg('Mutation successful!')
+    console.log('useMutation onSuccess callback:', data)
+    setOnSuccessMsg('useMutation successful!')
   })
 
   return (

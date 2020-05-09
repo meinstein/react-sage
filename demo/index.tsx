@@ -5,6 +5,7 @@ import { UseFormDemo } from '../src/useForm/demo'
 import { UseQueryDemo } from '../src/useQuery/demo'
 import { UseMutationDemo } from '../src/useMutation/demo'
 import { UseFilePickerDemo } from '../src/useFilePicker/demo'
+import { UseBatchMutationDemo } from '../src/useBatchMutation/demo'
 import { UsePersistedStateDemo } from '../src/usePersistedState/demo'
 
 interface ContainerProps {
@@ -33,6 +34,9 @@ ReactDOM.render(
     </Container>
     <Container title="useMutation">
       <UseMutationDemo />
+    </Container>
+    <Container title="useBatchMutation">
+      <UseBatchMutationDemo />
     </Container>
     <Container title="useFilePicker">
       <UseFilePickerDemo />

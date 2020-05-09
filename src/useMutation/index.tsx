@@ -1,53 +1,28 @@
 import * as React from 'react'
 
+import { useBatchMutation } from '../useBatchMutation'
 import { UseMutation } from './types'
 
 export function useMutation<T, U>(
-  method: (...args: T[]) => Promise<U>,
+  method: (...params: T[]) => Promise<U>,
   onSuccess?: (res: U) => void
 ): UseMutation<T, U> {
-  const [result, setResult] = React.useState({
-    response: null,
-    loading: false,
-    error: null
+  // useMutation is simply an implementation of useBatchMutation, but with
+  // one set of params and one response object.
+  const mutation = useBatchMutation(method, (response) => {
+    return onSuccess(response[0])
   })
 
-  const invoke = React.useCallback(
-    async (...params) => {
-      setResult((prevState) => ({ ...prevState, loading: true }))
-      try {
-        const response = await method(...params)
-        setResult((prevState) => ({
-          ...prevState,
-          response,
-          loading: false
-        }))
-      } catch (error) {
-        setResult((prevState) => ({
-          ...prevState,
-          error,
-          loading: false
-        }))
-      }
-    },
-    [result.response, result.loading, result.error]
-  )
-
-  React.useEffect(() => {
-    if (onSuccess && result.response) {
-      onSuccess(result.response)
-    }
-  }, [result.response])
-
   return {
-    result,
-    invoke,
-    reset: (): void => {
-      setResult({
-        response: null,
-        loading: false,
-        error: null
-      })
+    ...mutation,
+    result: {
+      ...mutation.result,
+      // De-structure the sole respones object from the list when available.
+      response: mutation.result.response ? mutation.result.response[0] : null
+    },
+    invoke: (params): void => {
+      // Put params in a list so they meet useBatchMutation's reqs.
+      mutation.invoke([params])
     }
   }
 }
