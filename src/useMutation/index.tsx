@@ -1,5 +1,3 @@
-import * as React from 'react'
-
 import { useBatchMutation } from '../useBatchMutation'
 import { UseMutation } from './types'
 
