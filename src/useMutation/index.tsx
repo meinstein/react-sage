@@ -8,7 +8,7 @@ export function useMutation<T, U>(
   // useMutation is simply an implementation of useBatchMutation, but with
   // one set of params and one response object.
   const mutation = useBatchMutation(method, (response) => {
-    return onSuccess && onSuccess(response[0])
+    onSuccess && onSuccess(response[0])
   })
 
   return {
