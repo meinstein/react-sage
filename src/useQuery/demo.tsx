@@ -1,6 +1,7 @@
 import * as React from 'react'
 
 import { useQuery, cache } from '.'
+import { sleep } from './utils'
 
 export interface Resource {
   userId: number
@@ -15,15 +16,26 @@ const getRandomInt = (max: number): number => {
 
 const client = {
   async getResource({ id }: { id: number }): Promise<Resource> {
-    const response = await fetch(`https://jsonplaceholder.typicode.com/todos/${id}`)
-    return await response.json()
+    await sleep(500)
+    return Promise.resolve({
+      id,
+      userId: Math.floor(Math.random() * 100),
+      title: 'quis ut nam facilis et officia qui',
+      completed: false
+    })
   }
 }
 
 export const UseQueryDemo: React.FC = () => {
   const [id, setId] = React.useState(1)
-  const query = useQuery(client.getResource, { args: { id }, caching: { key: 'getResource', ttl: 10 } })
+  const [wait, setWait] = React.useState(true)
+  const query = useQuery(client.getResource, { wait, args: { id }, caching: { key: 'getResource', ttl: 10 } })
 
+  React.useEffect(() => {
+    window.setTimeout(() => {
+      setWait(false)
+    }, 2000)
+  }, [])
   return (
     <>
       <button
