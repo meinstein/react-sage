@@ -45,7 +45,7 @@ export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
    * Resets form state back to initialization period.
    */
   const reset = (): void => {
-    setState(() => null)
+    setState(() => createFormState(initialState, null, false))
   }
 
   return { set, hasErrors, data: state, reset }
