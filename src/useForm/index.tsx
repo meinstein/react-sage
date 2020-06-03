@@ -1,10 +1,9 @@
 import * as React from 'react'
 
 import { UseForm, UseFormState, UseFormOptions, UseFormData } from './types'
-import { usePersistedState } from '../usePersistedState'
 
 export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
-  const { persistConfig, initialState, validators } = options
+  const { initialState, validators } = options
 
   const createFormState = (
     formData: UseFormData<T>,
@@ -23,9 +22,7 @@ export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
     return formState
   }
 
-  const [state, setState, removePersistedState] = persistConfig
-    ? usePersistedState<UseFormState<T>>({ ...persistConfig, initialState: createFormState(initialState, null, false) })
-    : React.useState<UseFormState<T>>(createFormState(initialState, null, false))
+  const [state, setState] = React.useState<UseFormState<T>>(createFormState(initialState, null, false))
 
   /**
    * This setter it utilized by inputs to update its own part in the form state.
@@ -48,11 +45,7 @@ export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
    * Resets form state back to initialization period.
    */
   const reset = (): void => {
-    if (removePersistedState) {
-      removePersistedState()
-    } else {
-      setState(() => null)
-    }
+    setState(() => null)
   }
 
   return { set, hasErrors, data: state, reset }

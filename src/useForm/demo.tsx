@@ -6,8 +6,6 @@ export const UseFormDemo: React.FC = () => {
   const { set, reset, hasErrors, data } = useForm({
     // Required - Set initial state with all expected form fields.
     initialState: { foo: 'I am foo.', bar: 0 },
-    // Optional - can persist form state. Accepts same config as usePersistedState.
-    persistConfig: { key: 'demo-form', version: 1, storage: localStorage },
     // Optional - add validators for fields.
     validators: { foo: (val): boolean => !val }
   })

@@ -16,7 +16,7 @@ interface CacheItem<T> {
 }
 
 export class Cache {
-  cache: {}
+  cache: any
   constructor() {
     this.cache = {}
   }

@@ -1,5 +1,3 @@
-import { UsePersistedStateStorageOptions } from '../usePersistedState/types'
-
 export type UseFormState<T> = {
   [P in keyof T]: {
     error: boolean | undefined | string
@@ -19,7 +17,6 @@ export interface UseForm<T> {
 
 export interface UseFormOptions<T> {
   initialState: T
-  persistConfig?: UsePersistedStateStorageOptions
   validators?: {
     [P in keyof T]?: (value: T[P], prevFormState: UseFormState<T> | null) => boolean | undefined | string
   }
