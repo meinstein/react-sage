@@ -11,9 +11,9 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
   // Generate a cache key
   const stableArgs = React.useMemo(() => JSON.stringify(args, Object.keys(args || {}).sort()), [args])
   const cacheKey = caching.key ? `${caching.key}::${stableArgs}` : null
-  const retrieveCachedResult = (): U | null => {
+  const retrieveCachedResult = React.useCallback((): U | null => {
     return cache.retrieve<U>(cacheKey, caching.ttl)
-  }
+  }, [cacheKey, caching.ttl])
   const [state, setState] = React.useState(() => {
     const cachedResult = retrieveCachedResult()
     return {
@@ -45,12 +45,12 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
         }
       }
     },
-    [wait, cacheKey, setState]
+    [args, method, retrieveCachedResult, wait, cacheKey, setState]
   )
 
   React.useEffect(() => {
     fetchQuery(retries)
-  }, [fetchQuery])
+  }, [fetchQuery, retries])
 
   return {
     ...state,

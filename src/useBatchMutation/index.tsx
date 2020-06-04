@@ -22,14 +22,14 @@ export function useBatchMutation<T, U>(
         setResult(() => ({ error, response: null, loading: false }))
       }
     },
-    [setResult]
+    [method, setResult]
   )
 
   React.useEffect(() => {
     if (onSuccess && result.response) {
       onSuccess(result.response)
     }
-  }, [!!result.response])
+  }, [onSuccess, result.response])
 
   return {
     result,
