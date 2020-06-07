@@ -32,7 +32,7 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
       } else {
         setState((prevState) => ({ ...prevState, loading: true }))
         try {
-          const result = await method(JSON.parse(stableArgs))
+          const result = await method(stableArgs && JSON.parse(stableArgs))
           cache.upsert(cacheKey, result)
           setState((prevState) => ({ ...prevState, loading: false, result }))
         } catch (error) {
