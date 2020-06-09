@@ -2,15 +2,13 @@ import * as React from 'react'
 
 import { UseBatchMutation } from './types'
 
+const INITIAL_STATE = { response: null, loading: false, error: null }
+
 export function useBatchMutation<T, U>(
   method: (params: T) => Promise<U>,
   onSuccess?: (res: U[]) => void
 ): UseBatchMutation<T, U> {
-  const [result, setResult] = React.useState({
-    response: null,
-    loading: false,
-    error: null
-  })
+  const [result, setResult] = React.useState(INITIAL_STATE)
 
   const invoke = React.useCallback(
     async (params: T[]) => {
@@ -22,20 +20,20 @@ export function useBatchMutation<T, U>(
         setResult(() => ({ error, response: null, loading: false }))
       }
     },
-    [method, setResult]
+    [method]
   )
 
   React.useEffect(() => {
     if (onSuccess && result.response) {
       onSuccess(result.response)
+      // Reset to initial state to pevent re-running this effect.
+      setResult(INITIAL_STATE)
     }
   }, [onSuccess, result.response])
 
   return {
     result,
     invoke,
-    reset: (): void => {
-      setResult({ response: null, loading: false, error: null })
-    }
+    reset: () => setResult(INITIAL_STATE)
   }
 }
