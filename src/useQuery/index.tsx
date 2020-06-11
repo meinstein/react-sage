@@ -1,7 +1,8 @@
 import * as React from 'react'
 
 import { UseQueryOptions, UseQueryResult } from './types'
-import { sleep, Cache } from './utils'
+import { Cache } from './cache'
+import { sleep } from './utils'
 
 export const cache = new Cache()
 
@@ -10,7 +11,7 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
   const { wait = false, caching = {}, args, retries = 0 } = options || {}
   // Generate a cache key
   const stableArgs = React.useMemo(() => JSON.stringify(args, Object.keys(args || {}).sort()), [args])
-  const cacheKey = caching.key ? `${caching.key}::${stableArgs}` : null
+  const cacheKey = caching.key ? cache.createKey(caching.key, stableArgs) : null
   const retrieveCachedResult = React.useCallback((): U | null => {
     return cache.retrieve<U>(cacheKey, caching.ttl)
   }, [cacheKey, caching.ttl])
@@ -55,7 +56,7 @@ export function useQuery<T, U>(method: (args: T) => Promise<U>, options?: UseQue
   return {
     ...state,
     refresh: async (): Promise<void> => {
-      cache.remove(cacheKey)
+      cache.deleteKeyWithExactMatch(cacheKey)
       await fetchQuery(retries)
     }
   }

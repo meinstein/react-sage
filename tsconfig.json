@@ -14,5 +14,5 @@
     "esModuleInterop": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "src/**/*test.ts", "src/**/*demo.tsx"]
+  "exclude": ["node_modules", "src/**/*test*.ts*", "src/**/*demo.tsx"]
 }
