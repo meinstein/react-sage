@@ -1,6 +1,7 @@
 import * as React from 'react'
 
-import { useQuery, cache } from '.'
+import { cache } from './cache'
+import { useQuery } from '.'
 import { sleep } from './utils'
 
 export interface Resource {
@@ -14,7 +15,7 @@ const getRandomInt = (max: number): number => {
   return Math.floor(Math.random() * Math.floor(max)) + 1
 }
 
-const client = {
+export const client = {
   async getResource({ id }: { id: number }): Promise<Resource> {
     await sleep(500)
     return Promise.resolve({
@@ -29,21 +30,20 @@ const client = {
 export const UseQueryDemo: React.FC = () => {
   const [id, setId] = React.useState(1)
   const [wait, setWait] = React.useState(true)
-  const query = useQuery(client.getResource, { wait, args: { id }, caching: { key: 'getResource', ttl: 10 } })
+
+  const query = useQuery(client.getResource, {
+    wait,
+    args: { id },
+    caching: { key: 'getResource', ttl: 10 }
+  })
 
   React.useEffect(() => {
-    window.setTimeout(() => {
-      setWait(false)
-    }, 2000)
+    window.setTimeout(() => setWait(false), 2000)
   }, [])
+
   return (
     <>
-      <button
-        disabled={query.loading}
-        onClick={(): void => {
-          setId(getRandomInt(5))
-        }}
-      >
+      <button disabled={query.loading} onClick={() => setId(getRandomInt(5))}>
         Refresh Query
       </button>
       {<pre>{query.loading ? 'Query loading...' : 'Query successful!'}</pre>}

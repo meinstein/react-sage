@@ -3,7 +3,7 @@ import * as React from 'react'
 import { UseForm, UseFormState, UseFormOptions, UseFormData } from './types'
 
 export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
-  const { initialState, validators } = options
+  const { initialState, validators } = options || {}
 
   const createFormState = (
     formData: UseFormData<T>,
@@ -11,7 +11,7 @@ export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
     isDirty: boolean
   ): UseFormState<T> => {
     const formState = {} as UseFormState<T>
-    for (const [field, value] of Object.entries(formData)) {
+    for (const [field, value] of Object.entries(formData || {})) {
       formState[field] = {
         value,
         isDirty,
