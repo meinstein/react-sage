@@ -16,7 +16,7 @@ export function useForm<T>(options?: UseFormOptions<T>): UseForm<T> {
         value,
         isDirty,
         // If field has validator, pass it the current value of said field & previous form state.
-        error: validators?.[field] && validators[field](value, prevFormState, formData)
+        error: validators?.[field] && validators[field](value, prevFormState)
       }
     }
     return formState
