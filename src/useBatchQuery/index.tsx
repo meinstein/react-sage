@@ -13,7 +13,6 @@ export function useBatchQuery<T, U>(
 
   // Generate a cache key
   const stableArgs = React.useMemo(() => {
-    console.log('here')
     const arrayOfStableArgs = args.map((arg) => JSON.stringify(arg, Object.keys(arg || {}).sort()))
     return JSON.stringify(arrayOfStableArgs)
   }, [args])
