@@ -7,11 +7,28 @@ interface CacheItem<T> {
 }
 
 export class Cache {
+  /**
+   * A default TTL for retrievals that do not specify one.
+   */
+  ttl: number | null
+  /**
+   * The maximum number of keys to be stored in the cache.
+   */
+  maxSize: number
+  /**
+   * An ordered list of cache keys (oldest to newest)
+   */
+  order: string[]
   cache: { [key: string]: { cachedAt: number; data: any } }
 
   constructor() {
     this.cache = {}
+    this.order = []
 
+    this.ttl = null
+    this.maxSize = 1000
+
+    this.configure = this.configure.bind(this)
     this.upsert = this.upsert.bind(this)
     this.retrieve = this.retrieve.bind(this)
     this.createKey = this.createKey.bind(this)
@@ -19,15 +36,46 @@ export class Cache {
     this.deleteKeysWithPartialMatch = this.deleteKeysWithPartialMatch.bind(this)
   }
 
-  public upsert<T>(key: string | number | null, data: T): void {
+  /**
+   * This TTL (in seconds) is used for all cache retrievals that do not specify a TTL.
+   * If a TTL is included in a given cache.retrieve(key, ttl), it will override this setting.
+   */
+  public configure(configs: { ttl?: number; maxSize?: number }): void {
+    if (configs.ttl) {
+      this.ttl = configs.ttl
+    }
+    if (configs.maxSize) {
+      this.maxSize = configs.maxSize
+    }
+  }
+
+  public upsert<T>(key: string, data: T): void {
     if (!key) return
+
+    // Check total number of keys in cache
+    const cacheSize = Object.keys(this.cache).length
+    if (cacheSize > this.maxSize) {
+      // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
+      this.deleteKeyWithExactMatch(this.order.shift())
+    }
+
+    // Push new keys to the end of the order list
+    if (!this.cache[key]) {
+      this.order.push(key)
+    }
+
+    // Store the cached data under the desingated key and include timestamp.
     this.cache[key] = {
       data,
       cachedAt: Date.now()
     } as CacheItem<T>
   }
 
-  public retrieve<T>(key: string | number, ttl?: number): T | null {
+  /**
+   * @param key The key on which to store this cached value.
+   * @param ttl The TTL (in seconds) for this particular retrieval.
+   */
+  public retrieve<T>(key: string, ttl?: number): T | null {
     if (!key) return null
 
     const cachedItem = this.cache[key]
@@ -36,8 +84,10 @@ export class Cache {
       return null
     }
 
+    // Check for either a base TTL or passed in TTL
+    const _ttl = ttl || this.ttl
     // ttl is in seconds - convert to ms
-    if (ttl && Date.now() - cachedItem.cachedAt > ttl * 1000) {
+    if (_ttl && Date.now() - cachedItem.cachedAt > _ttl * 1000) {
       return null
     }
 
@@ -54,7 +104,9 @@ export class Cache {
    */
   public deleteKeyWithExactMatch(key: string | number | null): void {
     if (!key) return
+
     Reflect.deleteProperty(this.cache, key)
+    this.order = this.order.filter((k) => k !== key)
   }
 
   /**
@@ -70,6 +122,7 @@ export class Cache {
 
   public reset(): void {
     this.cache = {}
+    this.order = []
   }
 }
 

@@ -51,6 +51,9 @@ export const UseQueryDemo: React.FC = () => {
         <b>Response:</b> {JSON.stringify(query.result)}
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>
+        <b>Query Cache Order:</b> {JSON.stringify(cache.order)}
+      </pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>
         <b>Query Cache:</b> {JSON.stringify(cache.cache)}
       </pre>
     </>
