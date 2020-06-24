@@ -7,6 +7,7 @@ import { UseMutationDemo } from '../src/useMutation/demo'
 import { UseFilePickerDemo } from '../src/useFilePicker/demo'
 import { UseBatchMutationDemo } from '../src/useBatchMutation/demo'
 import { UsePersistedStateDemo } from '../src/usePersistedState/demo'
+import { UseBatchQueryDemo } from '../src/UseBatchQuery/demo'
 
 interface ContainerProps {
   title: string
@@ -31,6 +32,9 @@ ReactDOM.render(
     </Container>
     <Container title="useQuery">
       <UseQueryDemo />
+    </Container>
+    <Container title="useBatchQuery">
+      <UseBatchQueryDemo />
     </Container>
     <Container title="useMutation">
       <UseMutationDemo />

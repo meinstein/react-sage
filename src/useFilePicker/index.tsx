@@ -3,7 +3,7 @@ import * as React from 'react'
 import { UseFileOptions, UseFileResponse, UseFileErrors } from './types'
 import { loadFile, loadImage, areImageDimsValid, resizeImage as resizeImageUtil } from './utils'
 
-const BYTES_PER_METABYTE = 1000000
+const BYTES_PER_MEGABYTE = 1000000
 
 export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => {
   const {
@@ -32,7 +32,7 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
 
     if (minFileSize) {
       // convert minSize from megabytes to bytes
-      const minBytes = minFileSize * BYTES_PER_METABYTE
+      const minBytes = minFileSize * BYTES_PER_MEGABYTE
       const tooSmall = iterableFileList.some((file) => file.size < minBytes)
       setError((prevErrors) => ({
         ...prevErrors,
@@ -42,7 +42,7 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
 
     if (maxFileSize) {
       // convert maxSize from megabytes to bytes
-      const maxBytes = maxFileSize * BYTES_PER_METABYTE
+      const maxBytes = maxFileSize * BYTES_PER_MEGABYTE
       const tooBig = iterableFileList.some((file) => file.size > maxBytes)
       setError((prevErrors) => ({
         ...prevErrors,
@@ -113,7 +113,7 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
     files,
     errors,
     onClick(): void {
-      fileInputRef?.current?.click()
+      fileInputRef.current.click()
     },
     HiddenFileInput({ multiple, accept }): React.ReactElement {
       return (

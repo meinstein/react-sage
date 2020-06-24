@@ -72,3 +72,5 @@ export class Cache {
     this.cache = {}
   }
 }
+
+export const cache = new Cache()
