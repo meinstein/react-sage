@@ -15,9 +15,10 @@ npm i react-sage
 // Available hooks.
 import { useForm } from 'react-sage'
 import { useQuery } from 'react-sage'
+import { useBatchQuery } from 'react-sage'
 import { useMutation } from 'react-sage'
-import { useFilePicker } from 'react-sage'
 import { useBatchMutation } from 'react-sage'
+import { useFilePicker } from 'react-sage'
 import { usePersistedState } from 'react-sage'
 ```
 
