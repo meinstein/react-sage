@@ -9,24 +9,24 @@ afterEach(() => cache.reset())
 
 test('Upsert key with exact match', () => {
   const key = cache.createKey('RETRIEVE_MOCK_RESOURCE', JSON.stringify({ id: 101 }))
-  cache.upsert(key, mockResourceOne)
+  cache.upsert(key, mockResourceOne, 'DONE')
   const cachedResult = cache.retrieve(key)
-  expect(cachedResult).toEqual(mockResourceOne)
+  expect(cachedResult.data).toEqual(mockResourceOne)
 })
 
 test('Remove key with exact match', () => {
   const key = cache.createKey('RETRIEVE_MOCK_RESOURCE', JSON.stringify({ id: 101 }))
-  cache.upsert(key, mockResourceOne)
+  cache.upsert(key, mockResourceOne, 'DONE')
   cache.deleteKeyWithExactMatch(key)
   expect(cache.cache).toEqual({})
 })
 
 test('Remove keys with partial match', () => {
   const keyOne = cache.createKey('RETRIEVE_MOCK_RESOURCE', JSON.stringify({ id: 101 }))
-  cache.upsert(keyOne, mockResourceOne)
+  cache.upsert(keyOne, mockResourceOne, 'DONE')
   const keyTwo = cache.createKey('RETRIEVE_MOCK_RESOURCE', JSON.stringify({ id: 102 }))
-  cache.upsert(keyTwo, mockResourceTwo)
+  cache.upsert(keyTwo, mockResourceTwo, 'DONE')
   cache.deleteKeysWithPartialMatch('RETRIEVE_MOCK_RESOURCE', 101)
   const cachedResult = cache.retrieve(keyTwo)
-  expect(cachedResult).toEqual(mockResourceTwo)
+  expect(cachedResult.data).toEqual(mockResourceTwo)
 })

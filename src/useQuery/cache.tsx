@@ -1,9 +1,13 @@
 /**
  * Helper class for dealing with in-memory cache.
  */
+
+type Status = 'PENDING' | 'DONE'
+
 interface CacheItem<T> {
   cachedAt: number
   data: T
+  status: Status
 }
 
 export class Cache {
@@ -19,7 +23,7 @@ export class Cache {
    * An ordered list of cache keys (oldest to newest)
    */
   order: string[]
-  cache: { [key: string]: { cachedAt: number; data: any } }
+  cache: { [key: string]: { cachedAt: number; data: any; status: Status } }
 
   constructor() {
     this.cache = {}
@@ -49,7 +53,7 @@ export class Cache {
     }
   }
 
-  public upsert<T>(key: string, data: T): void {
+  public upsert<T>(key: string, data: T, status: Status): void {
     if (!key) return
 
     // Check total number of keys in cache
@@ -67,6 +71,7 @@ export class Cache {
     // Store the cached data under the desingated key and include timestamp.
     this.cache[key] = {
       data,
+      status,
       cachedAt: Date.now()
     } as CacheItem<T>
   }
@@ -75,7 +80,7 @@ export class Cache {
    * @param key The key on which to store this cached value.
    * @param ttl The TTL (in seconds) for this particular retrieval.
    */
-  public retrieve<T>(key: string, ttl?: number): T | null {
+  public retrieve<T>(key: string, ttl?: number): CacheItem<T> | null {
     if (!key) return null
 
     const cachedItem = this.cache[key]
@@ -91,7 +96,7 @@ export class Cache {
       return null
     }
 
-    return cachedItem.data
+    return cachedItem
   }
 
   public createKey(...parts: Array<string | number>): string {

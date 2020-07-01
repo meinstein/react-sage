@@ -9,7 +9,7 @@ export function useBatchQuery<T, U>(
   options: UseBatchQueryOptions<T>
 ): UseBatchQueryResult<U> {
   // Parse out and create defaults for options
-  const { wait = false, caching = {}, args, retries = 0 } = options
+  const { wait = false, caching = {}, args, retries = 0, cacheRetries = 5 } = options
 
   // Generate a cache key
   const stableArgs = React.useMemo(() => {
@@ -18,36 +18,45 @@ export function useBatchQuery<T, U>(
   }, [args])
 
   const cacheKey = caching.key ? cache.createKey(caching.key, stableArgs) : null
-  const retrieveCachedResult = React.useCallback((): U[] | null => {
+  const retrieveCachedResult = React.useCallback(() => {
     return cache.retrieve<U[]>(cacheKey, caching.ttl)
   }, [cacheKey, caching.ttl])
 
   const [state, setState] = React.useState(() => {
     const cachedResult = retrieveCachedResult()
     return {
-      result: cachedResult,
+      result: cachedResult ? cachedResult.data : null,
       loading: cachedResult ? false : !wait,
       error: null
     }
   })
 
   const fetchQuery = React.useCallback(
-    async (retryCount = retries): Promise<void> => {
+    async (retryCount?: number): Promise<void> => {
       if (wait) return
       const cachedResult = retrieveCachedResult()
-      if (cachedResult) {
-        setState((prevState) => ({ ...prevState, result: cachedResult }))
+      if (cachedResult?.status === 'PENDING') {
+        // Either utilize the recursive retryCount or the default initial number of cache retries.
+        const rc = retryCount || cacheRetries
+        await sleep(500 * (1 / rc))
+        await fetchQuery(rc - 1)
+      } else if (cachedResult?.status === 'DONE') {
+        setState((prevState) => ({ ...prevState, result: cachedResult.data }))
       } else {
         setState((prevState) => ({ ...prevState, loading: true }))
         try {
+          cache.upsert(cacheKey, null, 'PENDING')
           const parsedArgs: T[] = JSON.parse(stableArgs).map((stableArg: string): T => JSON.parse(stableArg))
           const result = await Promise.all(parsedArgs.map(method))
-          cache.upsert(cacheKey, result)
+          cache.upsert(cacheKey, result, 'DONE')
           setState((prevState) => ({ ...prevState, result, loading: false }))
         } catch (error) {
-          if (retryCount > 0) {
-            await sleep(retryCount * 250)
-            await fetchQuery(retryCount - 1)
+          cache.deleteKeyWithExactMatch(cacheKey)
+          // Either utilize the recursive retryCount or the user-configured initial number of retries.
+          const rc = retryCount || retries
+          if (rc > 0) {
+            await sleep(rc * 250)
+            await fetchQuery(rc - 1)
           } else {
             setState((prevState) => ({ ...prevState, loading: false, error }))
           }
