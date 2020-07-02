@@ -1,8 +1,12 @@
 export interface UseQueryCaching {
-  // A unique key to store the query in the caching layer.
-  // The final caching key is a combination of this key + the args passed to the method.
+  /**
+   * A unique key to store the query in the caching layer.
+   * The final caching key is a combination of this key + the args passed to the method.
+   */
   key?: string
-  // in seconds
+  /**
+   * In seconds.
+   */
   ttl?: number
 }
 
