@@ -8,6 +8,11 @@ export interface UseQueryCaching {
    * In seconds.
    */
   ttl?: number
+  /**
+   * The amount of time to wait before retrying the cache for a pending result. In milliseconds.
+   * Default is 250ms.
+   */
+  retryInterval?: number
 }
 
 export interface UseQueryOptions<T> {
