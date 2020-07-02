@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { UseBatchQueryOptions, UseBatchQueryResult } from './types'
+import { UseBatchQueryOptions, UseBatchQueryResult, FetchQueryArgs } from './types'
 import { cache } from '../useQuery/cache'
 import { sleep } from '../useQuery/utils'
 
@@ -25,23 +25,24 @@ export function useBatchQuery<T, U>(
   const [state, setState] = React.useState(() => {
     const cachedResult = retrieveCachedResult()
     return {
-      result: cachedResult ? cachedResult.data : null,
-      loading: cachedResult ? false : !wait,
+      result: cachedResult?.status === 'DONE' ? cachedResult.data : null,
+      loading: cachedResult?.status === 'DONE' ? false : !wait,
       error: null
     }
   })
 
   const fetchQuery = React.useCallback(
-    async (retryCount?: number): Promise<void> => {
+    async ({ networkRetryCount = retries, cacheRetryCount = cacheRetries }: FetchQueryArgs): Promise<void> => {
       if (wait) return
       const cachedResult = retrieveCachedResult()
       if (cachedResult?.status === 'PENDING') {
         // Either utilize the recursive retryCount or the default initial number of cache retries.
-        const rc = retryCount || cacheRetries
-        await sleep(500 * (1 / rc))
-        await fetchQuery(rc - 1)
+        if (cacheRetryCount > 0) {
+          await sleep(500 * (1 / cacheRetryCount))
+          await fetchQuery({ cacheRetryCount: cacheRetryCount - 1 })
+        }
       } else if (cachedResult?.status === 'DONE') {
-        setState((prevState) => ({ ...prevState, result: cachedResult.data }))
+        setState((prevState) => ({ ...prevState, result: cachedResult.data, loading: false }))
       } else {
         setState((prevState) => ({ ...prevState, loading: true }))
         try {
@@ -53,29 +54,28 @@ export function useBatchQuery<T, U>(
         } catch (error) {
           cache.deleteKeyWithExactMatch(cacheKey)
           // Either utilize the recursive retryCount or the user-configured initial number of retries.
-          const rc = retryCount || retries
-          if (rc > 0) {
-            await sleep(rc * 250)
-            await fetchQuery(rc - 1)
+          if (networkRetryCount > 0) {
+            await sleep(networkRetryCount * 250)
+            await fetchQuery({ networkRetryCount: networkRetryCount - 1 })
           } else {
             setState((prevState) => ({ ...prevState, loading: false, error }))
           }
         }
       }
     },
-    [stableArgs, method, retrieveCachedResult, wait, cacheKey, retries]
+    [stableArgs, method, retrieveCachedResult, wait, cacheKey, retries, cacheRetries]
   )
 
   // Initiate fetch on mount
   React.useEffect(() => {
-    fetchQuery()
+    fetchQuery({})
   }, [fetchQuery])
 
   return {
     ...state,
     refresh: async (): Promise<void> => {
       cache.deleteKeyWithExactMatch(cacheKey)
-      await fetchQuery()
+      await fetchQuery({})
     }
   }
 }

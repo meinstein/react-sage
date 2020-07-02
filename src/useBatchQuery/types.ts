@@ -29,3 +29,8 @@ export interface UseBatchQueryResult<U> {
   loading: boolean
   refresh: () => Promise<void>
 }
+
+export interface FetchQueryArgs {
+  networkRetryCount?: number
+  cacheRetryCount?: number
+}
