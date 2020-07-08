@@ -2,7 +2,7 @@
  * Helper class for dealing with in-memory cache.
  */
 
-type Status = 'PENDING' | 'DONE'
+type Status = 'PENDING' | 'DONE' | 'FAILED'
 
 interface CacheItem<T> {
   cachedAt: number

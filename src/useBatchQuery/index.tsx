@@ -40,8 +40,8 @@ export function useBatchQuery<T, U>(
         await fetchQuery()
       } else if (cachedResult?.status === 'DONE') {
         setState((prevState) => ({ ...prevState, result: cachedResult.data, loading: false }))
-      } else {
-        setState((prevState) => ({ ...prevState, loading: true }))
+      } else if (cachedResult?.status === 'FAILED') {
+        setState((prevState) => ({ ...prevState, error: cachedResult.data, loading: false }))
         try {
           cache.upsert(cacheKey, null, 'PENDING')
           const parsedArgs: T[] = JSON.parse(stableArgs).map((stableArg: string): T => JSON.parse(stableArg))
@@ -49,12 +49,12 @@ export function useBatchQuery<T, U>(
           cache.upsert(cacheKey, result, 'DONE')
           setState((prevState) => ({ ...prevState, result, loading: false }))
         } catch (error) {
-          cache.deleteKeyWithExactMatch(cacheKey)
           // Either utilize the recursive retryCount or the user-configured initial number of retries.
           if (networkRetryCount > 0) {
             await sleep(networkRetryCount * 250)
             await fetchQuery(networkRetryCount - 1)
           } else {
+            cache.upsert(cacheKey, error, 'FAILED')
             setState((prevState) => ({ ...prevState, loading: false, error }))
           }
         }
