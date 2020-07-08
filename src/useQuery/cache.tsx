@@ -6,7 +6,7 @@ type Status = 'PENDING' | 'DONE' | 'FAILED'
 
 interface CacheItem<T> {
   cachedAt: number
-  data: T
+  data: T | Error
   status: Status
 }
 

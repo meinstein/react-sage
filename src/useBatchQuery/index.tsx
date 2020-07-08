@@ -25,9 +25,9 @@ export function useBatchQuery<T, U>(
   const [state, setState] = React.useState(() => {
     const cachedResult = retrieveCachedResult()
     return {
-      result: cachedResult?.status === 'DONE' ? cachedResult.data : null,
+      result: cachedResult?.status === 'DONE' ? (cachedResult.data as U[]) : null,
       loading: cachedResult?.status === 'DONE' || cachedResult.status === 'FAILED' ? false : !wait,
-      error: cachedResult?.status === 'FAILED' ? cachedResult.data : null
+      error: cachedResult?.status === 'FAILED' ? (cachedResult.data as Error) : null
     }
   })
 
@@ -39,9 +39,9 @@ export function useBatchQuery<T, U>(
         await sleep(caching.retryInterval || 250)
         await fetchQuery()
       } else if (cachedResult?.status === 'DONE') {
-        setState((prevState) => ({ ...prevState, result: cachedResult.data, loading: false }))
+        setState((prevState) => ({ ...prevState, result: cachedResult.data as U[], loading: false }))
       } else if (cachedResult?.status === 'FAILED') {
-        setState((prevState) => ({ ...prevState, error: cachedResult.data, loading: false }))
+        setState((prevState) => ({ ...prevState, error: cachedResult.data as Error, loading: false }))
       } else {
         try {
           cache.upsert(cacheKey, null, 'PENDING')
