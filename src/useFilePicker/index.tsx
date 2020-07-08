@@ -16,11 +16,11 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
     resizeImage,
     imageQuality
   } = options
-  const fileInputRef = React.useRef(undefined)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
   const [files, setFileList] = React.useState<File[] | null>([])
   const [errors, setError] = React.useState<UseFileErrors>({})
 
-  const onChange = async (fileList: FileList): Promise<void> => {
+  const onChange = async (fileList: FileList | null): Promise<void> => {
     if (!fileList || !fileList.length) return
 
     // Scrub previous data from state
@@ -105,7 +105,7 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
 
     setFileList(iterableFileList)
     if (fileInputRef?.current) {
-      fileInputRef.current.value = null
+      fileInputRef.current.value = ''
     }
   }
 
@@ -113,7 +113,9 @@ export const useFilePicker = (options: UseFileOptions = {}): UseFileResponse => 
     files,
     errors,
     onClick(): void {
-      fileInputRef.current.click()
+      if (fileInputRef?.current) {
+        fileInputRef.current.click()
+      }
     },
     HiddenFileInput({ multiple, accept }): React.ReactElement {
       return (

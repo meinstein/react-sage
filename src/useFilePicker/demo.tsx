@@ -20,7 +20,7 @@ export const UseFilePickerDemo: React.FC = () => {
       setDataUrls(data)
     }
     getDataUrls()
-  }, [files.map((f) => f.name).join()])
+  }, [files])
 
   return (
     <>

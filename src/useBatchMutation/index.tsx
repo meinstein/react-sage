@@ -1,23 +1,23 @@
 import * as React from 'react'
 
-import { UseBatchMutation } from './types'
+import { UseBatchMutation, UseBatchMutationResult } from './types'
 
-const INITIAL_STATE = { response: null, loading: false, error: null }
+const INITIAL_STATE = { response: [], loading: false, error: null }
 
 export function useBatchMutation<T, U>(
   method: (params: T) => Promise<U>,
   onSuccess?: (res: U[]) => void
 ): UseBatchMutation<T, U> {
-  const [result, setResult] = React.useState(INITIAL_STATE)
+  const [result, setResult] = React.useState<UseBatchMutationResult<U>>(INITIAL_STATE)
 
   const invoke = React.useCallback(
     async (params: T[]) => {
       setResult((prevState) => ({ ...prevState, loading: true }))
       try {
-        const response = await Promise.all(params.map(method))
+        const response = await Promise.all<U>(params.map(method))
         setResult(() => ({ response, error: null, loading: false }))
       } catch (error) {
-        setResult(() => ({ error, response: null, loading: false }))
+        setResult(() => ({ error, response: [], loading: false }))
       }
     },
     [method]

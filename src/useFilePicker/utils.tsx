@@ -50,27 +50,29 @@ export const loadImage = (dataUrl: string): Promise<HTMLImageElement> => {
 }
 
 export const areImageDimsValid = (image: HTMLImageElement, dims?: UseFileImageDims): boolean => {
-  if (dims.minImageHeight && image.height < dims.minImageHeight) {
-    return false
-  }
+  if (dims) {
+    if (dims.minImageHeight && image.height < dims.minImageHeight) {
+      return false
+    }
 
-  if (dims.minImageWidth && image.width < dims.minImageHeight) {
-    return false
-  }
+    if (dims.minImageWidth && image.width < dims.minImageWidth) {
+      return false
+    }
 
-  if (dims.maxImageHeight && image.height > dims.maxImageHeight) {
-    return false
-  }
+    if (dims.maxImageHeight && image.height > dims.maxImageHeight) {
+      return false
+    }
 
-  if (dims.maxImageWidth && image.width > dims.maxImageWidth) {
-    return false
+    if (dims.maxImageWidth && image.width > dims.maxImageWidth) {
+      return false
+    }
   }
 
   return true
 }
 
 export const resizeImage = (img: HTMLImageElement, maxSize: number, mime: string, quality = 0.92): Promise<Blob> => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let { width, height } = img
     const maxDimension = Math.max(width, height)
     if (maxDimension > maxSize) {
@@ -82,7 +84,18 @@ export const resizeImage = (img: HTMLImageElement, maxSize: number, mime: string
     canvas.width = width
     canvas.height = height
     const ctx = canvas.getContext('2d')
-    ctx.drawImage(img, 0, 0, width, height)
-    ctx.canvas.toBlob(resolve, mime, quality)
+    const blobCallback = (blob: Blob | null): void => {
+      if (blob) {
+        resolve(blob)
+      } else {
+        reject('Could not resize. Blob not available.')
+      }
+    }
+    if (ctx) {
+      ctx.drawImage(img, 0, 0, width, height)
+      ctx.canvas.toBlob(blobCallback, mime, quality)
+    } else {
+      reject('Could not reize. Canvas context not available.')
+    }
   })
 }

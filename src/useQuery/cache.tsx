@@ -23,7 +23,8 @@ export class Cache {
    * An ordered list of cache keys (oldest to newest)
    */
   order: string[]
-  cache: { [key: string]: { cachedAt: number; data: any; status: Status } }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cache: Record<string, CacheItem<any>>
 
   constructor() {
     this.cache = {}
@@ -53,34 +54,34 @@ export class Cache {
     }
   }
 
-  public upsert<T>(key: string, data: T, status: Status): void {
-    if (!key) return
+  public upsert<T>(key: string | null, data: T, status: Status): void {
+    if (key) {
+      // Check total number of keys in cache
+      const cacheSize = Object.keys(this.cache).length
+      if (cacheSize > this.maxSize) {
+        // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
+        this.deleteKeyWithExactMatch(this.order.shift())
+      }
 
-    // Check total number of keys in cache
-    const cacheSize = Object.keys(this.cache).length
-    if (cacheSize > this.maxSize) {
-      // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
-      this.deleteKeyWithExactMatch(this.order.shift())
+      // Push new keys to the end of the order list
+      if (!this.cache[key]) {
+        this.order.push(key)
+      }
+
+      // Store the cached data under the desingated key and include timestamp.
+      this.cache[key] = {
+        data,
+        status,
+        cachedAt: Date.now()
+      } as CacheItem<T>
     }
-
-    // Push new keys to the end of the order list
-    if (!this.cache[key]) {
-      this.order.push(key)
-    }
-
-    // Store the cached data under the desingated key and include timestamp.
-    this.cache[key] = {
-      data,
-      status,
-      cachedAt: Date.now()
-    } as CacheItem<T>
   }
 
   /**
    * @param key The key on which to store this cached value.
    * @param ttl The TTL (in seconds) for this particular retrieval.
    */
-  public retrieve<T>(key: string, ttl?: number): CacheItem<T> | null {
+  public retrieve<T>(key: string | null, ttl?: number): CacheItem<T> | null {
     if (!key) return null
 
     const cachedItem = this.cache[key]
@@ -99,15 +100,16 @@ export class Cache {
     return cachedItem
   }
 
-  public createKey(...parts: Array<string | number>): string {
-    if (!parts || !parts.length) return
+  public createKey(...parts: Array<string | number>): string | null {
+    if (!parts || !parts.length) return null
+
     return parts.map(String).join('::')
   }
 
   /**
    * Provide the exact key to delete from the cache.
    */
-  public deleteKeyWithExactMatch(key: string | number | null): void {
+  public deleteKeyWithExactMatch(key?: string | number | null): void {
     if (!key) return
 
     Reflect.deleteProperty(this.cache, key)
