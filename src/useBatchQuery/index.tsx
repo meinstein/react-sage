@@ -26,7 +26,7 @@ export function useBatchQuery<T, U>(
     const cachedResult = retrieveCachedResult()
     return {
       result: cachedResult?.status === 'DONE' ? (cachedResult.data as U[]) : null,
-      loading: cachedResult?.status === 'DONE' || cachedResult.status === 'FAILED' ? false : !wait,
+      loading: cachedResult?.status === 'DONE' || cachedResult?.status === 'FAILED' ? false : !wait,
       error: cachedResult?.status === 'FAILED' ? (cachedResult.data as Error) : null
     }
   })
