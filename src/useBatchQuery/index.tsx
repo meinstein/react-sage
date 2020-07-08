@@ -26,8 +26,8 @@ export function useBatchQuery<T, U>(
     const cachedResult = retrieveCachedResult()
     return {
       result: cachedResult?.status === 'DONE' ? cachedResult.data : null,
-      loading: cachedResult?.status === 'DONE' ? false : !wait,
-      error: null
+      loading: cachedResult?.status === 'DONE' || cachedResult.status === 'FAILED' ? false : !wait,
+      error: cachedResult?.status === 'FAILED' ? cachedResult.data : null
     }
   })
 
@@ -42,6 +42,7 @@ export function useBatchQuery<T, U>(
         setState((prevState) => ({ ...prevState, result: cachedResult.data, loading: false }))
       } else if (cachedResult?.status === 'FAILED') {
         setState((prevState) => ({ ...prevState, error: cachedResult.data, loading: false }))
+      } else {
         try {
           cache.upsert(cacheKey, null, 'PENDING')
           const parsedArgs: T[] = JSON.parse(stableArgs).map((stableArg: string): T => JSON.parse(stableArg))
