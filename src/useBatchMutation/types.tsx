@@ -1,7 +1,7 @@
 export interface UseBatchMutationResult<U> {
   error: Error | null
   loading: boolean
-  response: U[] | null
+  response: U[]
 }
 
 export interface UseBatchMutation<T, U> {

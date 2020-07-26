@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { UsePersistedStateOptions, Dispatch, SetStateAction, PersistedStateData } from './types'
+import { UsePersistedStateOptions, PersistedStateData } from './types'
 
 function formatForStorage<S>(version: number, data: S): PersistedStateData<S> {
   return {
@@ -14,7 +14,7 @@ export function usePersistedState<S>({
   key,
   initialState,
   version = 0.1
-}: UsePersistedStateOptions<S>): [S, Dispatch<SetStateAction<S>>, () => void] {
+}: UsePersistedStateOptions<S>): [S, (value: S | ((prevState: S) => S)) => void, () => void] {
   const storageKey = React.useMemo(() => `usePersistedState::${key}`, [key])
   // State to store our value
   // Pass initial state function to useState so logic is only executed once
@@ -58,7 +58,7 @@ export function usePersistedState<S>({
       setState(initialState)
       storage.removeItem(storageKey)
     } catch (err) {
-      console.log(err)
+      console.error(err)
     }
   }
 

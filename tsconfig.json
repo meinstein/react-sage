@@ -11,7 +11,8 @@
     "sourceMap": false,
     "declaration": true,
     "declarationDir": "./dist/",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "strict": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "src/**/*test*.ts*", "src/**/*demo.tsx"]
