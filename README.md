@@ -1,3 +1,5 @@
+![BUILD](https://github.com/meinstein/react-sage/workflows/CI/badge.svg)
+
 # react-sage
 
 Handy-dandy hooks.
