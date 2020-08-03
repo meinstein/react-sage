@@ -1,8 +1,8 @@
 import * as React from 'react'
 
-import { cache } from './cache'
-import { useQuery } from '.'
-import { sleep } from './utils'
+import { useQuery } from '../../../src/useQuery'
+import { cache } from '../../../src/useQuery/cache'
+import { sleep } from '../../../src/useQuery/utils'
 
 export interface Resource {
   userId: number
@@ -46,7 +46,8 @@ export const UseQueryDemo: React.FC = () => {
       <button disabled={query.loading} onClick={() => setId(getRandomInt(5))}>
         Refresh Query
       </button>
-      {<pre>{query.loading ? 'Query loading...' : 'Query successful!'}</pre>}
+      <pre>{query.loading && 'Query loading...'}</pre>
+      <pre>{!query.loading && query.result && 'Query completed!'}</pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>
         <b>Response:</b> {JSON.stringify(query.result)}
       </pre>

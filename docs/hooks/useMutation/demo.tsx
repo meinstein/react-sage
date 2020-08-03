@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { useMutation } from '.'
+import { useMutation } from '../../../src/useMutation'
 
 interface ResourceCreationParams {
   title: string
@@ -29,7 +29,7 @@ export const UseMutationDemo: React.FC = () => {
   const [onSuccessMsg, setOnSuccessMsg] = React.useState('')
   const mutation = useMutation(client.createResource, (data) => {
     console.log('useMutation onSuccess callback:', data)
-    setOnSuccessMsg('useMutation successful!')
+    setOnSuccessMsg(`useMutation successful: ${JSON.stringify(data)}`)
   })
 
   return (
@@ -47,12 +47,9 @@ export const UseMutationDemo: React.FC = () => {
       </button>
       {<pre>{mutation.result.loading ? 'Mutation loading...' : 'Mutation ready for action!'}</pre>}
       <pre>
-        <b>On success callback:</b> {onSuccessMsg}
+        <b>On success callback:</b>
       </pre>
-      <pre style={{ whiteSpace: 'pre-wrap' }}>
-        <b>Response: </b>
-        {JSON.stringify(mutation.result.response)}
-      </pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>{onSuccessMsg}</pre>
     </>
   )
 }

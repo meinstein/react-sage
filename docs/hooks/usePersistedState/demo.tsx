@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { usePersistedState } from '.'
+import { usePersistedState } from '../../../src/usePersistedState'
 
 export const UsePersistedStateDemo: React.FC = () => {
   const [state, setState, remove] = usePersistedState({

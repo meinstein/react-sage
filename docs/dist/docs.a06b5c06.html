@@ -1,0 +1,13 @@
+<h1 id="useform">useForm</h1>
+<p>This hook simplifies the logic form state. To use, you must provide the form&#39;s initial state such that all keys and the type for each key are known. You may also optionally provide a validator for any or none of the provided form keys.</p>
+<pre><code class="language-js">const form = useForm({
+  initialState: {
+    email: &#39;&#39;,
+    password: &#39;&#39;
+  },
+  validators: {
+    email: (val) =&gt; {
+      return !isEmail(val)
+    }
+  }
+})</code></pre>

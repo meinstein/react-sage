@@ -1,8 +1,8 @@
 import * as React from 'react'
 
-import { useBatchQuery } from '.'
+import { useBatchQuery } from '../../../src/useBatchQuery'
+import { cache } from '../../../src/useQuery/cache'
 import { client } from '../useQuery/demo'
-import { cache } from '../useQuery/cache'
 
 export const UseBatchQueryDemo: React.FC = () => {
   const args = [{ id: 1 }, { id: 2 }, { id: 3 }]
