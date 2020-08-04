@@ -1,5 +1,7 @@
 ![BUILD](https://github.com/meinstein/react-sage/workflows/CI/badge.svg)
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/847858a8-7968-467e-be4e-60a7ff1675fe/deploy-status)](https://app.netlify.com/sites/react-sage/deploys)
+
 # react-sage
 
 Handy-dandy hooks.
