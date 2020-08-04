@@ -1,34 +1,17 @@
 import * as React from 'react'
+import { NavLink as Link, NavLinkProps } from 'react-router-dom'
 
-import { Hook } from '..'
-
-interface NavLinkProps {
-  onClick(): void
-  isActive: boolean
-}
-
-const NavLink: React.FC<NavLinkProps> = (props) => {
+export const NavLink: React.FC<NavLinkProps> = (props) => {
   return (
-    <span
-      onClick={props.onClick}
-      style={{
-        cursor: 'pointer',
-        textDecoration: props.isActive ? 'underline' : 'none',
-        color: 'blue',
-        margin: '0.5rem 0.5rem 0.5rem 0.5rem'
-      }}
-    >
-      {props.children}
-    </span>
+    <Link
+      style={{ margin: '0.5rem', textDecoration: 'none' }}
+      activeStyle={{ textDecoration: 'underline' }}
+      {...props}
+    />
   )
 }
 
-interface NavProps {
-  hook: Hook
-  setHook(hook: Hook): void
-}
-
-export const Nav: React.FC<NavProps> = (props) => {
+export const Nav: React.FC = (props) => {
   return (
     <nav
       style={{
@@ -39,34 +22,7 @@ export const Nav: React.FC<NavProps> = (props) => {
         margin: '0px auto',
         padding: '1.5rem 1rem 0 1rem'
       }}
-    >
-      <NavLink onClick={() => props.setHook('useBatchMutation')} isActive={props.hook === 'useBatchMutation'}>
-        useBatchMutation
-      </NavLink>
-      <span>|</span>
-      <NavLink onClick={() => props.setHook('useBatchQuery')} isActive={props.hook === 'useBatchQuery'}>
-        useBatchQuery
-      </NavLink>
-      <span>|</span>
-      <NavLink onClick={() => props.setHook('useFilePicker')} isActive={props.hook === 'useFilePicker'}>
-        useFilePicker
-      </NavLink>
-      <span>|</span>
-      <NavLink onClick={() => props.setHook('useForm')} isActive={props.hook === 'useForm'}>
-        useForm
-      </NavLink>
-      <span>|</span>
-      <NavLink onClick={() => props.setHook('useMutation')} isActive={props.hook === 'useMutation'}>
-        useMutation
-      </NavLink>
-      <span>|</span>
-      <NavLink onClick={() => props.setHook('usePersistedState')} isActive={props.hook === 'usePersistedState'}>
-        usePersistedState
-      </NavLink>
-      <span>|</span>
-      <NavLink onClick={() => props.setHook('useQuery')} isActive={props.hook === 'useQuery'}>
-        useQuery
-      </NavLink>
-    </nav>
+      {...props}
+    />
   )
 }

@@ -1,6 +1,6 @@
 # useForm
 
-This hook simplifies the logic form state. To use, you must provide the form's initial state such that all keys and the type for each key are known. You may also optionally provide a validator for any or none of the provided form keys.
+This hook handles form-related state. To use it, you must provide it with your form's initial state such that all keys and the type for each key are known. Optionally, you can provide validators for any (or none) of the form keys.
 
 ```js
 const form = useForm({
@@ -9,9 +9,25 @@ const form = useForm({
     password: ''
   },
   validators: {
-    email: (val) => {
-      return !isEmail(val)
-    }
+    email: (val) => !isEmail(val),
+    password: (val) => !val
   }
 })
+```
+
+This hook returns an object with a mixture of methods and data. See the below snippet for further details:
+
+```js
+const {
+  set,
+  hasErrors,
+  data,
+  reset,
+  getValue,
+  getError,
+  isFieldDirty
+} = useForm({
+    initialState: {...},
+    validators: {...}
+  })
 ```
