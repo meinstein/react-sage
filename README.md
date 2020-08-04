@@ -1,10 +1,12 @@
 ![BUILD](https://github.com/meinstein/react-sage/workflows/CI/badge.svg)
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/847858a8-7968-467e-be4e-60a7ff1675fe/deploy-status)](https://app.netlify.com/sites/react-sage/deploys)
+
 # react-sage
 
 Handy-dandy hooks.
 
-[Click here to view demo](https://react-sage.netlify.com)
+[Click here to view docs](https://react-sage.netlify.com)
 
 ## Use
 
@@ -22,15 +24,4 @@ import { useMutation } from 'react-sage'
 import { useBatchMutation } from 'react-sage'
 import { useFilePicker } from 'react-sage'
 import { usePersistedState } from 'react-sage'
-```
-
-## Demo
-
-Each hook has a small demo included (see: `src/{useHookName}/demo.tsx`).
-
-You can also run a stand-alone demo environment as follows:
-
-```bash
-# Starts dev server on http://localhost:1234
-npm run demo
 ```

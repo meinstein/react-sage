@@ -24,7 +24,7 @@ export function useBatchMutation<T, U>(
   )
 
   React.useEffect(() => {
-    if (onSuccess && result.response) {
+    if (onSuccess && result.response?.length) {
       onSuccess(result.response)
       // Reset to initial state to pevent re-running this effect.
       setResult(INITIAL_STATE)

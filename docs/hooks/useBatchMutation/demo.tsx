@@ -1,13 +1,13 @@
 import * as React from 'react'
 
-import { useBatchMutation } from '.'
+import { useBatchMutation } from '../../../src/useBatchMutation'
 import { client } from '../useMutation/demo'
 
 export const UseBatchMutationDemo: React.FC = () => {
   const [onSuccessMsg, setOnSuccessMsg] = React.useState('')
   const mutation = useBatchMutation(client.createResource, (data) => {
     console.log('useBatchMutation onSuccess callback:', data)
-    setOnSuccessMsg('useBatchMutation successful!')
+    setOnSuccessMsg(`useBatchMutation successful: ${JSON.stringify(data)}`)
   })
 
   return (
@@ -32,12 +32,9 @@ export const UseBatchMutationDemo: React.FC = () => {
       </button>
       {<pre>{mutation.result.loading ? 'Mutation loading...' : 'Mutation ready for action!'}</pre>}
       <pre>
-        <b>On success callback:</b> {onSuccessMsg}
+        <b>On success callback:</b>
       </pre>
-      <pre style={{ whiteSpace: 'pre-wrap' }}>
-        <b>Response: </b>
-        {JSON.stringify(mutation.result.response)}
-      </pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>{onSuccessMsg}</pre>
     </>
   )
 }

@@ -1,7 +1,7 @@
 import * as React from 'react'
 
-import { useFilePicker } from '.'
-import { loadFile } from './utils'
+import { useFilePicker } from '../../../src/useFilePicker'
+import { loadFile } from '../../../src/useFilePicker/utils'
 
 const MAX_FILE_SIZE = 1
 
@@ -34,9 +34,9 @@ export const UseFilePickerDemo: React.FC = () => {
         <b>Has invalid image? </b>
         {errors.hasInvalidImage ? 'yes' : 'no'}
       </pre>
-      <div>
+      <div style={{ maxWidth: 250 }}>
         {dataUrls.map((d, i) => (
-          <img src={d} key={i} />
+          <img src={d} key={i} style={{ width: '100%' }} />
         ))}
       </div>
     </>
