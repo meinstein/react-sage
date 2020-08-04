@@ -2,12 +2,14 @@
  * Helper class for dealing with in-memory cache.
  */
 
-type Status = 'PENDING' | 'DONE' | 'FAILED'
+export namespace QueryCache {
+  export type Status = 'PENDING' | 'DONE' | 'FAILED'
 
-interface CacheItem<T> {
-  cachedAt: number
-  data: T | Error
-  status: Status
+  export interface Item<T> {
+    cachedAt: number
+    data: T | Error
+    status: Status
+  }
 }
 
 export class Cache {
@@ -24,7 +26,7 @@ export class Cache {
    */
   order: string[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  cache: Record<string, CacheItem<any>>
+  cache: Record<string, QueryCache.Item<any>>
 
   constructor() {
     this.cache = {}
@@ -54,7 +56,7 @@ export class Cache {
     }
   }
 
-  public upsert<T>(key: string | null, data: T, status: Status): void {
+  public upsert<T>(key: string | null, data: T, status: QueryCache.Status): void {
     if (key) {
       // Check total number of keys in cache
       const cacheSize = Object.keys(this.cache).length
@@ -73,7 +75,7 @@ export class Cache {
         data,
         status,
         cachedAt: Date.now()
-      } as CacheItem<T>
+      } as QueryCache.Item<T>
     }
   }
 
@@ -81,7 +83,7 @@ export class Cache {
    * @param key The key on which to store this cached value.
    * @param ttl The TTL (in seconds) for this particular retrieval.
    */
-  public retrieve<T>(key: string | null, ttl?: number): CacheItem<T> | null {
+  public retrieve<T>(key: string | null, ttl?: number): QueryCache.Item<T> | null {
     if (!key) return null
 
     const cachedItem = this.cache[key]
@@ -133,4 +135,4 @@ export class Cache {
   }
 }
 
-export const cache = new Cache()
+export const queryCache = new Cache()

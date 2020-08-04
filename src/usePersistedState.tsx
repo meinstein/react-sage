@@ -1,20 +1,31 @@
 import * as React from 'react'
 
-import { UsePersistedStateOptions, PersistedStateData } from './types'
+export namespace UsePersistedState {
+  export interface StorageOptions {
+    storage: Storage
+    key: string
+    version?: number
+  }
 
-function formatForStorage<S>(version: number, data: S): PersistedStateData<S> {
+  export interface Options<S> extends StorageOptions {
+    initialState?: S
+  }
+
+  export interface Data<S> {
+    version: number
+    data: S
+  }
+}
+
+function formatForStorage<S>(version: number, data: S): UsePersistedState.Data<S> {
   return {
     version,
     data
   }
 }
 
-export function usePersistedState<S>({
-  storage,
-  key,
-  initialState,
-  version = 0.1
-}: UsePersistedStateOptions<S>): [S, (value: S | ((prevState: S) => S)) => void, () => void] {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function usePersistedState<S>({ storage, key, initialState, version = 0.1 }: UsePersistedState.Options<S>) {
   const storageKey = React.useMemo(() => `usePersistedState::${key}`, [key])
   // State to store our value
   // Pass initial state function to useState so logic is only executed once

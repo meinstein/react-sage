@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import { useFilePicker } from '../../../src/useFilePicker'
-import { loadFile } from '../../../src/useFilePicker/utils'
+import { loadFile } from '../../../src/utils'
 
 const MAX_FILE_SIZE = 1
 
