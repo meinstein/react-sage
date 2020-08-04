@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import { useBatchQuery } from '../../../src/useBatchQuery'
-import { cache } from '../../../src/useQuery/cache'
+import { queryCache } from '../../../src/queryCache'
 import { client } from '../useQuery/demo'
 
 export const UseBatchQueryDemo: React.FC = () => {
@@ -21,7 +21,7 @@ export const UseBatchQueryDemo: React.FC = () => {
         <b>Response:</b> {JSON.stringify(query.result)}
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>
-        <b>Query Cache:</b> {JSON.stringify(cache.cache)}
+        <b>Query Cache:</b> {JSON.stringify(queryCache.cache)}
       </pre>
     </>
   )

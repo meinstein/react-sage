@@ -10,7 +10,7 @@
     "clean": "rm -rf dist",
     "docs": "parcel docs/index.html --out-dir docs/dist --no-cache --no-autoinstall",
     "build:docs": "parcel build docs/index.html --out-dir docs/dist --no-cache --no-autoinstall",
-    "lint": "tsc --noEmit && eslint 'src/*/**/*.{ts,tsx}' --quiet --fix",
+    "lint": "tsc --noEmit && eslint 'src/**/*.{ts,tsx}' --quiet --fix",
     "prepublish": "npm run build",
     "prettier": "prettier -l 'src/**/*.ts*'",
     "prettier:fix": "npm run prettier -- --format",
@@ -34,6 +34,7 @@
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.9.0",
+    "@babel/plugin-transform-typescript": "^7.11.0",
     "@babel/preset-env": "^7.9.5",
     "@babel/preset-typescript": "^7.9.0",
     "@testing-library/react-hooks": "^3.2.1",

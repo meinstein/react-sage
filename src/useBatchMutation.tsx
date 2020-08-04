@@ -1,14 +1,18 @@
 import * as React from 'react'
 
-import { UseBatchMutation, UseBatchMutationResult } from './types'
+export namespace UseBatchMutation {
+  export interface Result<U> {
+    error: Error | null
+    loading: boolean
+    response: U[]
+  }
+}
 
 const INITIAL_STATE = { response: [], loading: false, error: null }
 
-export function useBatchMutation<T, U>(
-  method: (params: T) => Promise<U>,
-  onSuccess?: (res: U[]) => void
-): UseBatchMutation<T, U> {
-  const [result, setResult] = React.useState<UseBatchMutationResult<U>>(INITIAL_STATE)
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function useBatchMutation<T, U>(method: (params: T) => Promise<U>, onSuccess?: (res: U[]) => void) {
+  const [result, setResult] = React.useState<UseBatchMutation.Result<U>>(INITIAL_STATE)
 
   const invoke = React.useCallback(
     async (params: T[]) => {

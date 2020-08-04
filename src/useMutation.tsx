@@ -1,10 +1,7 @@
-import { useBatchMutation } from '../useBatchMutation'
-import { UseMutation } from './types'
+import { useBatchMutation } from './useBatchMutation'
 
-export function useMutation<T, U>(
-  method: (...params: T[]) => Promise<U>,
-  onSuccess?: (res: U) => void
-): UseMutation<T, U> {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function useMutation<T, U>(method: (...params: T[]) => Promise<U>, onSuccess?: (res: U) => void) {
   // useMutation is simply an implementation of useBatchMutation, but with
   // one set of params and one response object.
   const mutation = useBatchMutation(method, (response) => {
@@ -18,7 +15,7 @@ export function useMutation<T, U>(
       // De-structure the sole respones object from the list when available.
       response: mutation.result.response ? mutation.result.response[0] : null
     },
-    invoke: (params): void => {
+    invoke: (params: T): void => {
       // Put params in a list so they meet useBatchMutation's reqs.
       mutation.invoke([params])
     }

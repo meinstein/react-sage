@@ -1,4 +1,4 @@
-import { Cache } from './cache'
+import { Cache } from './queryCache'
 
 const mockResourceOne = { userId: 101, id: 101, title: 'Foo Bar', completed: true }
 const mockResourceTwo = { userId: 102, id: 102, title: 'Foo Baz', completed: true }

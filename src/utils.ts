@@ -1,4 +1,4 @@
-import { UseFileImageDims } from './types'
+import { UseFilePicker } from './useFilePicker'
 
 /**
  * Wraps native File Reader API in a promise.
@@ -49,7 +49,7 @@ export const loadImage = (dataUrl: string): Promise<HTMLImageElement> => {
   })
 }
 
-export const areImageDimsValid = (image: HTMLImageElement, dims?: UseFileImageDims): boolean => {
+export const areImageDimsValid = (image: HTMLImageElement, dims?: UseFilePicker.ImageDims): boolean => {
   if (dims) {
     if (dims.minImageHeight && image.height < dims.minImageHeight) {
       return false

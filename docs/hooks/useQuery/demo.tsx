@@ -1,8 +1,7 @@
 import * as React from 'react'
 
 import { useQuery } from '../../../src/useQuery'
-import { cache } from '../../../src/useQuery/cache'
-import { sleep } from '../../../src/useQuery/utils'
+import { queryCache } from '../../../src/queryCache'
 
 export interface Resource {
   userId: number
@@ -17,7 +16,6 @@ const getRandomInt = (max: number): number => {
 
 export const client = {
   async getResource({ id }: { id: number }): Promise<Resource> {
-    await sleep(500)
     return Promise.resolve({
       id,
       userId: Math.floor(Math.random() * 100),
@@ -52,10 +50,10 @@ export const UseQueryDemo: React.FC = () => {
         <b>Response:</b> {JSON.stringify(query.result)}
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>
-        <b>Query Cache Order:</b> {JSON.stringify(cache.order)}
+        <b>Query Cache Order:</b> {JSON.stringify(queryCache.order)}
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>
-        <b>Query Cache:</b> {JSON.stringify(cache.cache)}
+        <b>Query Cache:</b> {JSON.stringify(queryCache.cache)}
       </pre>
     </>
   )
