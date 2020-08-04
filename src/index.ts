@@ -5,4 +5,6 @@ export * from './useBatchQuery'
 export * from './useQuery'
 export * from './useFilePicker'
 export * from './usePersistedState'
+
+export * from './queryCache'
 export * as utils from './utils'
