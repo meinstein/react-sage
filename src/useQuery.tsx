@@ -2,8 +2,11 @@ import { useBatchQuery } from './useBatchQuery'
 
 export namespace UseQuery {
   export interface Options<T> {
+    /**
+     * Must provide this key to options.
+     */
+    args: T
     wait?: boolean
-    args?: T | null
     caching?: Caching
     retries?: number
   }
@@ -27,13 +30,14 @@ export namespace UseQuery {
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function useQuery<T, U>(method: (args?: T | null) => Promise<U>, options?: UseQuery.Options<T>) {
+export function useQuery<T, U>(method: (args: T) => Promise<U>, options: UseQuery.Options<T>) {
   // useQuery is simply an implementation of useBatchQuery, therefore must adjust any args
   // so they become compatible with useBatchQuery's reqs.
   const query = useBatchQuery(method, {
     ...(options || {}),
-    // Can be [undefined] as well, which is ok. If empty, useBatchQuery will not invoke it.
-    args: [options?.args]
+    // Can be [undefined | null] as well, which is ok.
+    // If empty list, useBatchQuery will not invoke it.
+    args: [options.args]
   })
 
   return {
