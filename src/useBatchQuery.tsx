@@ -64,6 +64,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
       if (wait) return
       const cachedResult = retrieveCachedResult()
       if (cachedResult?.status === 'PENDING') {
+        setState((prevState) => ({ ...prevState, loading: true }))
         await sleep(caching.retryInterval || 250)
         await fetchQuery()
       } else if (cachedResult?.status === 'DONE') {
@@ -72,6 +73,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
         setState((prevState) => ({ ...prevState, error: cachedResult.data as Error, loading: false }))
       } else {
         try {
+          setState((prevState) => ({ ...prevState, loading: true }))
           queryCache.upsert(cacheKey, null, 'PENDING')
           const parsedArgs: T[] = JSON.parse(stableArgs).map((stableArg: string): T => JSON.parse(stableArg))
           const result = await Promise.all(parsedArgs.map(method))
@@ -95,7 +97,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
   // Initiate fetch on mount
   React.useEffect(() => {
     fetchQuery()
-  }, [fetchQuery])
+  }, [fetchQuery, wait])
 
   return {
     ...state,

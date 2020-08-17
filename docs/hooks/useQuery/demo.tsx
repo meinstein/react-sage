@@ -10,12 +10,19 @@ export interface Resource {
   completed: boolean
 }
 
+export const sleep = (milliseconds: number): Promise<void> => {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds)
+  })
+}
+
 const getRandomInt = (max: number): number => {
   return Math.floor(Math.random() * Math.floor(max)) + 1
 }
 
 export const client = {
   async getResource({ id }: { id: number }): Promise<Resource> {
+    await sleep(2000)
     return Promise.resolve({
       id,
       userId: Math.floor(Math.random() * 100),
@@ -38,7 +45,7 @@ export const UseQueryDemo: React.FC = () => {
   React.useEffect(() => {
     window.setTimeout(() => setWait(false), 2000)
   }, [])
-
+  console.log(query.loading)
   return (
     <>
       <button disabled={query.loading} onClick={() => setId(getRandomInt(5))}>
