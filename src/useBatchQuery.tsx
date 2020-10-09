@@ -69,7 +69,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
         await fetchQuery()
       } else if (cachedResult?.status === 'DONE') {
         setState((prevState) => ({ ...prevState, result: cachedResult.data as U[], loading: false }))
-      } else if (cachedResult?.status === 'FAILED') {
+      } else if (cachedResult?.status === 'FAILED' && networkRetryCount === 0) {
         setState((prevState) => ({ ...prevState, error: cachedResult.data as Error, loading: false }))
       } else {
         try {
