@@ -38,14 +38,19 @@ export const UseQueryDemo: React.FC = () => {
 
   const query = useQuery(client.getResource, {
     wait,
+    retries: 2,
     args: { id },
     caching: { key: 'getResource', ttl: 10 }
   })
 
   React.useEffect(() => {
+    console.log('[useQuery] isWaiting: true')
     window.setTimeout(() => setWait(false), 2000)
+    console.log('[useQuery] isWaiting: false')
   }, [])
-  console.log(query.loading)
+
+  console.log('[useQuery] isLoading:', query.loading)
+
   return (
     <>
       <button disabled={query.loading} onClick={() => setId(getRandomInt(5))}>
