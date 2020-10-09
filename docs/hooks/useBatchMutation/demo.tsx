@@ -6,7 +6,7 @@ import { client } from '../useMutation/demo'
 export const UseBatchMutationDemo: React.FC = () => {
   const [onSuccessMsg, setOnSuccessMsg] = React.useState('')
   const mutation = useBatchMutation(client.createResource, (data) => {
-    console.log('useBatchMutation onSuccess callback:', data)
+    console.log('[useBatchMutation] onSuccess callback:', data)
     setOnSuccessMsg(`useBatchMutation successful: ${JSON.stringify(data)}`)
   })
 

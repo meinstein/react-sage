@@ -28,7 +28,7 @@ export const client = {
 export const UseMutationDemo: React.FC = () => {
   const [onSuccessMsg, setOnSuccessMsg] = React.useState('')
   const mutation = useMutation(client.createResource, (data) => {
-    console.log('useMutation onSuccess callback:', data)
+    console.log('[useMutation] onSuccess callback:', data)
     setOnSuccessMsg(`useMutation successful: ${JSON.stringify(data)}`)
   })
 
