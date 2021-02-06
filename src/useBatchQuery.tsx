@@ -2,6 +2,7 @@ import * as React from 'react'
 
 import { UseQuery } from './useQuery'
 import { queryCache } from './queryCache'
+import { sleep } from './utils'
 
 export namespace UseBatchQuery {
   export interface Options<T> {
@@ -26,12 +27,6 @@ export namespace UseBatchQuery {
      */
     cacheRetries?: number
   }
-}
-
-const sleep = (milliseconds: number): Promise<void> => {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, milliseconds)
-  })
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

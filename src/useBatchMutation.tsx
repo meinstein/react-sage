@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 export namespace UseBatchMutation {
   export interface Result<U> {
@@ -11,33 +11,56 @@ export namespace UseBatchMutation {
 const INITIAL_STATE = { response: [], loading: false, error: null }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function useBatchMutation<T, U>(method: (params: T) => Promise<U>, onSuccess?: (res: U[]) => void) {
-  const [result, setResult] = React.useState<UseBatchMutation.Result<U>>(INITIAL_STATE)
+export function useBatchMutation<T, U>(
+  method: (params: T) => Promise<U>,
+  onSuccess?: (r: U[]) => void,
+  onError?: (e: Error) => void
+) {
+  const [result, setResult] = useState<UseBatchMutation.Result<U>>(INITIAL_STATE)
+  const [invocations, setInvocations] = useState<UseBatchMutation.Result<U>[]>([])
 
-  const invoke = React.useCallback(
+  const invoke = useCallback(
     async (params: T[]) => {
-      setResult((prevState) => ({ ...prevState, loading: true }))
+      // Each successive invocation is cause for resetting to initial state + loading.
+      setResult(() => ({ ...INITIAL_STATE, loading: true }))
+
       try {
         const response = await Promise.all<U>(params.map(method))
-        setResult(() => ({ response, error: null, loading: false }))
+        const result = { response, error: null, loading: false }
+        setResult(() => result)
+        setInvocations((prevInvocations) => prevInvocations.concat(result))
       } catch (error) {
-        setResult(() => ({ error, response: [], loading: false }))
+        const result = { error, response: [], loading: false }
+        setResult(() => result)
+        setInvocations((prevInvocations) => prevInvocations.concat(result))
       }
     },
     [method]
   )
 
-  React.useEffect(() => {
-    if (onSuccess && result.response?.length) {
+  useEffect(() => {
+    if (onSuccess && invocations.length > 0 && result.response?.length > 0) {
       onSuccess(result.response)
-      // Reset to initial state to pevent re-running this effect.
-      setResult(INITIAL_STATE)
     }
-  }, [onSuccess, result.response])
+    // Only trigger effect when invocation list updates!
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invocations.length])
+
+  useEffect(() => {
+    if (onError && invocations.length > 0 && result.error) {
+      onError(result.error)
+    }
+    // The only reason this effect should re-run is because the invocation list changes!
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invocations.length])
 
   return {
     result,
     invoke,
-    reset: () => setResult(INITIAL_STATE)
+    invocations,
+    reset: () => {
+      setResult(INITIAL_STATE)
+      setInvocations([])
+    }
   }
 }
