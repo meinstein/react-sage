@@ -1,5 +1,6 @@
 import * as React from 'react'
 
+import { sleep } from '../../../src/utils'
 import { useQuery } from '../../../src/useQuery'
 import { queryCache } from '../../../src/queryCache'
 
@@ -8,12 +9,6 @@ export interface Resource {
   id: number
   title: string
   completed: boolean
-}
-
-export const sleep = (milliseconds: number): Promise<void> => {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, milliseconds)
-  })
 }
 
 const getRandomInt = (max: number): number => {
@@ -34,11 +29,13 @@ export const client = {
 
 export const UseQueryDemo: React.FC = () => {
   const [id, setId] = React.useState(1)
+  const [delay, setDelay] = React.useState(null)
   const [wait, setWait] = React.useState(true)
 
   const query = useQuery(client.getResource, {
     wait,
     retries: 2,
+    polling: { delay },
     args: { id },
     caching: { key: 'getResource', ttl: 10 }
   })
@@ -55,6 +52,12 @@ export const UseQueryDemo: React.FC = () => {
     <>
       <button disabled={query.loading} onClick={() => setId(getRandomInt(5))}>
         Refresh Query
+      </button>
+      <button disabled={delay !== null} onClick={() => setDelay(2000)}>
+        Start Polling (2000ms)
+      </button>
+      <button disabled={delay === null} onClick={() => setDelay(null)}>
+        Stop Polling
       </button>
       <pre>{query.loading && 'Query loading...'}</pre>
       <pre>{!query.loading && query.result && 'Query completed!'}</pre>
