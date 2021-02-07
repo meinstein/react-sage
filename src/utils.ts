@@ -99,3 +99,9 @@ export const resizeImage = (img: HTMLImageElement, maxSize: number, mime: string
     }
   })
 }
+
+export const sleep = (milliseconds: number): Promise<void> => {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds)
+  })
+}

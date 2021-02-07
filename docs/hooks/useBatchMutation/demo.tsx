@@ -13,7 +13,7 @@ export const UseBatchMutationDemo: React.FC = () => {
   return (
     <>
       <button
-        onClick={(): void => {
+        onClick={() => {
           mutation.invoke([
             {
               title: 'foo 1',
@@ -30,11 +30,16 @@ export const UseBatchMutationDemo: React.FC = () => {
       >
         Create Resource
       </button>
+      <button onClick={mutation.reset}>Reset</button>
       {<pre>{mutation.result.loading ? 'Mutation loading...' : 'Mutation ready for action!'}</pre>}
       <pre>
         <b>On success callback:</b>
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>{onSuccessMsg}</pre>
+      <pre>
+        <b>Invocation history:</b>
+      </pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(mutation.invocations)}</pre>
     </>
   )
 }

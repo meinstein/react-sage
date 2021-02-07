@@ -5,7 +5,7 @@
     "module": "commonjs",
     "target": "es5",
     "jsx": "react",
-    "lib": ["dom", "es2017"],
+    "lib": ["dom", "es2020"],
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "sourceMap": false,
