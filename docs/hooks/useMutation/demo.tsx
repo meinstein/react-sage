@@ -34,22 +34,17 @@ export const UseMutationDemo: React.FC = () => {
 
   return (
     <>
-      <button
-        onClick={(): void => {
-          mutation.invoke({
-            title: 'foo',
-            body: 'bar',
-            userId: 1
-          })
-        }}
-      >
-        Create Resource
-      </button>
+      <button onClick={() => mutation.invoke({ title: 'foo', body: 'bar', userId: 1 })}>Create Resource</button>
+      <button onClick={mutation.reset}>Reset</button>
       {<pre>{mutation.result.loading ? 'Mutation loading...' : 'Mutation ready for action!'}</pre>}
       <pre>
         <b>On success callback:</b>
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>{onSuccessMsg}</pre>
+      <pre>
+        <b>Invocation history:</b>
+      </pre>
+      <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(mutation.invocations)}</pre>
     </>
   )
 }
