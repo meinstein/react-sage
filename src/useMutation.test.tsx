@@ -5,7 +5,7 @@ import { useMutation } from './useMutation'
 
 const mockedApiClientMethod = jest.fn(
   async (params: { name: string }): Promise<{ id: number; name: string }> => {
-    await sleep(50)
+    await sleep(5)
     if (['foo', 'bar'].includes(params.name)) {
       return Promise.resolve({ ...params, id: 1 })
     } else {

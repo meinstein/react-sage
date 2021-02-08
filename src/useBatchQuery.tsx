@@ -1,6 +1,7 @@
 import * as React from 'react'
 
 import { UseQuery } from './useQuery'
+import { useInterval } from './useInterval'
 import { queryCache } from './queryCache'
 import { sleep } from './utils'
 
@@ -23,16 +24,19 @@ export namespace UseBatchQuery {
      */
     retries?: number
     /**
-     * The number of times to attempt accessing the cache while a cached result is pending.
+     * Polling-related options.
      */
-    cacheRetries?: number
+    polling?: UseQuery.Polling
   }
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: UseBatchQuery.Options<T>) {
   // Parse out and create defaults for options
-  const { wait = false, caching = {}, args, retries = 0 } = options
+  const { wait = false, caching = {}, polling, args, retries = 0 } = options
+  // defaults
+  const delay = polling?.delay ? polling.delay : null
+  const pauseOnVisibilityChange = polling?.pauseOnVisibilityChange ? polling.pauseOnVisibilityChange : true
 
   // Generate a cache key
   const stableArgs = React.useMemo(() => {
@@ -130,11 +134,20 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
     fetchQuery()
   }, [fetchQuery, wait])
 
+  const refresh = React.useCallback(async (): Promise<void> => {
+    // console.log(document.visibilityState, document.visibilityState, polling.pauseOnVisibilityChange, polling)
+    if (document.visibilityState && document.visibilityState === 'hidden' && pauseOnVisibilityChange) return
+    // Deleted the cache key before fetching again ensures a "hard" refresh.
+    queryCache.deleteKeyWithExactMatch(cacheKey)
+    await fetchQuery()
+  }, [cacheKey, fetchQuery, pauseOnVisibilityChange])
+
+  // The value of `wait` also dictates whether the interval should run its course.
+  const reconciledDelay = wait ? null : delay
+  useInterval(refresh, reconciledDelay)
+
   return {
     ...state,
-    refresh: async (): Promise<void> => {
-      queryCache.deleteKeyWithExactMatch(cacheKey)
-      await fetchQuery()
-    }
+    refresh
   }
 }

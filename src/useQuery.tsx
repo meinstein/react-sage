@@ -8,6 +8,7 @@ export namespace UseQuery {
     args: T
     wait?: boolean
     caching?: Caching
+    polling?: Polling
     retries?: number
   }
 
@@ -26,6 +27,19 @@ export namespace UseQuery {
      * Default is 250ms.
      */
     retryInterval?: number
+  }
+
+  export interface Polling {
+    /**
+     * Number representing the delay in ms. Set to `null` to "pause" the interval.
+     */
+    delay: number | null
+    /**
+     * Should invoking the the query be paused when the document visiblilty changes?
+     * Default is true.
+     * https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilityState
+     */
+    pauseOnVisibilityChange?: boolean
   }
 }
 

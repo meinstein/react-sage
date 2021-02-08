@@ -13,7 +13,7 @@ const api = {
 const updateUser = useMutation(api.users.update, onSuccess, onError)
 ```
 
-This hook returns a plan object with a variety of methods for both controlling and introspecting its progress.
+This hook returns an object with a variety of methods for both controlling and introspecting its progress.
 
 ```js
 const {
