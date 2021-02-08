@@ -5,6 +5,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
+    "forceResolutions": "npx npm-force-resolutions",
     "prebuild": "npx npm-run-all clean lint prettier",
     "build": "tsc",
     "clean": "rm -rf dist",
