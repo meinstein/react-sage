@@ -22,10 +22,19 @@ export namespace UseForm {
       [P in keyof T]?: (value: T[P], prevFormState: UseForm.State<T> | null) => boolean | string
     }
   }
+
+  export interface Form<T> {
+    set: (updatedData: Partial<T>) => void
+    hasErrors: boolean
+    data: UseForm.State<T>
+    reset(): void
+    getValue: (field: keyof T) => T[keyof T]
+    getError: (field: keyof T) => string | boolean
+    isFieldDirty: (field: keyof T) => boolean
+  }
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function useForm<T>(options: UseForm.Options<T>) {
+export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
   const { initialState, validators } = options
 
   const _hasError = React.useCallback(
