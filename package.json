@@ -5,16 +5,15 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "forceResolutions": "npx npm-force-resolutions",
-    "prebuild": "npx npm-run-all clean lint prettier",
+    "prebuild": "npm run clean && npm run lint && npm run prettier",
     "build": "tsc",
     "clean": "rm -rf dist",
     "docs": "parcel docs/index.html --out-dir docs/dist --no-cache --no-autoinstall",
     "build:docs": "parcel build docs/index.html --out-dir docs/dist --no-cache --no-autoinstall",
     "lint": "tsc --noEmit && eslint 'src/**/*.{ts,tsx}' --quiet --fix",
     "prepublishOnly": "npm run build",
-    "prettier": "npx prettier -l 'src/**/*.ts*'",
-    "prettier:fix": "npx run prettier -- --format",
+    "prettier": "prettier -l 'src/**/*.ts*'",
+    "prettier:fix": "prettier -- --format",
     "test": "jest"
   },
   "repository": {
@@ -56,6 +55,7 @@
     "jest": "^26.6.3",
     "marked": "^1.2.9",
     "parcel": "^1.12.4",
+    "prettier": "^2.2.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-markdown": "^5.0.3",
