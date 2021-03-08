@@ -25,7 +25,8 @@ const {
   reset,
   getValue,
   getError,
-  isFieldDirty
+  isFieldDirty,
+  isDirty,
 } = useForm({
     initialState: {...},
     validators: {...}

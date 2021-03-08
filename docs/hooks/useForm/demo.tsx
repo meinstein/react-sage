@@ -3,7 +3,7 @@ import * as React from 'react'
 import { useForm } from '../../../src'
 
 export const UseFormDemo: React.FC = () => {
-  const { set, reset, hasErrors, data, getValue, getError, isFieldDirty } = useForm({
+  const { set, reset, hasErrors, data, getValue, getError, isFieldDirty, isDirty } = useForm({
     // Required - Set initial state with all expected form fields.
     initialState: { foo: 'I am foo.', bar: 0 },
     // Optional - add validators for fields.
@@ -46,6 +46,10 @@ export const UseFormDemo: React.FC = () => {
           <b>Above field has error?</b> {data.bar.error || 'no'}
         </pre>
       </div>
+      <div>OVERALL STATES</div>
+      <pre>
+        <b>Are ANY fields on the form dirty?</b> {isDirty ? 'yes' : 'no'}
+      </pre>
       <pre>
         <b>Does overall form have errors?</b> {hasErrors ? 'yes' : 'no'}
       </pre>
