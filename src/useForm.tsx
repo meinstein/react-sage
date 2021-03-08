@@ -1,4 +1,4 @@
-import * as React from 'react'
+import { useCallback, useState } from 'react'
 
 export namespace UseForm {
   /**
@@ -26,6 +26,7 @@ export namespace UseForm {
   export interface Form<T> {
     set: (updatedData: Partial<T>) => void
     hasErrors: boolean
+    isDirty: boolean
     data: UseForm.State<T>
     reset(): void
     getValue: (field: keyof T) => T[keyof T]
@@ -37,7 +38,7 @@ export namespace UseForm {
 export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
   const { initialState, validators } = options
 
-  const _hasError = React.useCallback(
+  const _hasError = useCallback(
     (field: keyof T, value: T[keyof T], prevFormState: UseForm.State<T> | null): string | boolean => {
       const validator = validators?.[field]
       return typeof validator === 'function' ? validator(value, prevFormState) : false
@@ -45,7 +46,7 @@ export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
     [validators]
   )
 
-  const _initFormState = React.useCallback(
+  const _initFormState = useCallback(
     (formData: T): UseForm.State<T> => {
       const formState = {} as UseForm.State<T>
       const fields = Object.keys(formData) as Array<keyof T>
@@ -63,12 +64,12 @@ export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
     [_hasError]
   )
 
-  const [state, setState] = React.useState<UseForm.State<T>>(_initFormState(initialState))
+  const [state, setState] = useState<UseForm.State<T>>(_initFormState(initialState))
 
   /**
    * This setter it utilized by inputs to update its own part in the form state.
    */
-  const set = React.useCallback(
+  const set = useCallback(
     (updatedData: Partial<T>): void => {
       const updatedFields = Object.keys(updatedData) as Array<keyof T>
       setState((prevFormState) => {
@@ -93,9 +94,14 @@ export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
   const hasErrors = (Object.keys(state || {}) as Array<keyof T>).some((field) => Boolean(state[field].error))
 
   /**
+   * Keeps track of whether a single change has been made.
+   */
+  const isDirty = (Object.keys(state || {}) as Array<keyof T>).some((field) => Boolean(state[field].isDirty))
+
+  /**
    * Get the value for a field.
    */
-  const getValue = React.useCallback(
+  const getValue = useCallback(
     (field: keyof T) => {
       return state[field].value
     },
@@ -105,7 +111,7 @@ export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
   /**
    * Get the error for a field.
    */
-  const getError = React.useCallback(
+  const getError = useCallback(
     (field: keyof T) => {
       return state[field].error
     },
@@ -115,7 +121,7 @@ export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
   /**
    * Get the error for a field.
    */
-  const isFieldDirty = React.useCallback(
+  const isFieldDirty = useCallback(
     (field: keyof T) => {
       return state[field].isDirty
     },
@@ -125,7 +131,7 @@ export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
   /**
    * Resets form state back to initialization period.
    */
-  const reset = React.useCallback((): void => {
+  const reset = useCallback((): void => {
     setState(() => _initFormState(initialState))
   }, [_initFormState, initialState])
 
@@ -136,6 +142,7 @@ export function useForm<T>(options: UseForm.Options<T>): UseForm.Form<T> {
     reset,
     getValue,
     getError,
-    isFieldDirty
+    isFieldDirty,
+    isDirty
   }
 }
