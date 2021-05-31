@@ -65,7 +65,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
        */
       if (wait) return
       /**
-       * Check the in-mem cache for anything about this query.
+       * Check the cache for anything about this query.
        */
       const cachedResult = retrieveCachedResult()
       /**
@@ -79,19 +79,19 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
         await sleep(caching.retryInterval || 250)
         await fetchQuery()
         /**
-         * If you end up here it means that a previous invocation of this query has completed
+         * If we end up here it means that a previous invocation of this query has completed
          * and been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'DONE') {
         setState((prevState) => ({ ...prevState, result: cachedResult.data as U[], loading: false }))
         /**
-         * If you end up here it menas that a previous invocation of this query has filed and
+         * If we end up here it means that a previous invocation of this query has filed and
          * been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'FAILED') {
         setState((prevState) => ({ ...prevState, error: cachedResult.data as Error, loading: false }))
         /**
-         * If you end up here, the query is not recorded in the cache and it is time to use the network.
+         * If we end up here, the query is not recorded in the cache and it is time to use the network.
          */
       } else {
         try {
@@ -106,7 +106,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
           const parsedArgs: T[] = JSON.parse(stableArgs).map((stableArg: string): T => JSON.parse(stableArg))
           const result = await Promise.all(parsedArgs.map(method))
           /**
-           * If you end up here, it means that all went well and the data returned smoothly.
+           * If we end up here, it means that all went well and the data returned smoothly.
            */
           queryCache.upsert(cacheKey, result, 'DONE')
           setState((prevState) => ({ ...prevState, result, loading: false }))

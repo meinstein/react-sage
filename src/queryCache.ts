@@ -4,6 +4,7 @@
 
 export namespace QueryCache {
   export type Status = 'PENDING' | 'DONE' | 'FAILED'
+  export type Mode = 'ONLINE' | 'OFFLINE'
 
   export interface Item<T> {
     cachedAt: number
@@ -16,11 +17,16 @@ export class Cache {
   /**
    * A default TTL for retrievals that do not specify one.
    */
-  ttl: number | null
+  ttl: number
   /**
    * The maximum number of keys to be stored in the cache.
    */
   maxSize: number
+  /**
+   * Either online or offline.
+   * When offline, TTLs are ignored and cache is always shown.
+   */
+  mode: QueryCache.Mode
   /**
    * An ordered list of cache keys (oldest to newest)
    */
@@ -32,8 +38,9 @@ export class Cache {
     this.cache = {}
     this.order = []
 
-    this.ttl = null
+    this.ttl = 0
     this.maxSize = 1000
+    this.mode = 'ONLINE'
 
     this.configure = this.configure.bind(this)
     this.upsert = this.upsert.bind(this)
@@ -92,10 +99,17 @@ export class Cache {
       return null
     }
 
+    if (this.mode === 'OFFLINE') {
+      return cachedItem
+    }
+
     // Check for either a base TTL or passed in TTL
-    const _ttl = ttl || this.ttl
-    // ttl is in seconds - convert to ms
-    if (_ttl && Date.now() - cachedItem.cachedAt > _ttl * 1000) {
+    const _ttl = ttl ?? this.ttl
+    const _ttlInSeconds = _ttl * 1000
+
+    const isCacheStale = Date.now() - cachedItem.cachedAt > _ttlInSeconds
+
+    if (isCacheStale) {
       return null
     }
 
