@@ -1,32 +1,64 @@
 import { Cache } from './queryCache'
 
-const mockResourceOne = { userId: 101, id: 101, title: 'Foo Bar', completed: true }
-const mockResourceTwo = { userId: 102, id: 102, title: 'Foo Baz', completed: true }
-
 const cache = new Cache()
+
+const mockResourceOne = { userId: 1, id: 1, title: 'Foo', completed: true }
+const keyOne = cache.createKey('RESOURCE', JSON.stringify({ id: mockResourceOne.id }))
+
+const mockResourceTwo = { userId: 2, id: 2, title: 'Bar', completed: true }
+const keyTwo = cache.createKey('RESOURCE', JSON.stringify({ id: mockResourceTwo.id }))
 
 afterEach(() => cache.reset())
 
 test('Upsert key with exact match', () => {
-  const key = cache.createKey('RETRIEVE_MOCK_RESOURCE', JSON.stringify({ id: 101 }))
-  cache.upsert(key, mockResourceOne, 'DONE')
-  const cachedResult = cache.retrieve(key)
+  cache.upsert(keyOne, mockResourceOne, 'DONE')
+  const cachedResult = cache.retrieve(keyOne)
   expect(cachedResult.data).toEqual(mockResourceOne)
 })
 
 test('Remove key with exact match', () => {
-  const key = cache.createKey('RETRIEVE_MOCK_RESOURCE', JSON.stringify({ id: 101 }))
-  cache.upsert(key, mockResourceOne, 'DONE')
-  cache.deleteKeyWithExactMatch(key)
-  expect(cache.cache).toEqual({})
+  cache.upsert(keyOne, mockResourceOne, 'DONE')
+  cache.deleteKeyWithExactMatch(keyOne)
+  expect(cache.cache).toEqual(new Map())
 })
 
 test('Remove keys with partial match', () => {
-  const keyOne = cache.createKey('RETRIEVE_MOCK_RESOURCE', JSON.stringify({ id: 101 }))
   cache.upsert(keyOne, mockResourceOne, 'DONE')
-  const keyTwo = cache.createKey('RETRIEVE_MOCK_RESOURCE', JSON.stringify({ id: 102 }))
   cache.upsert(keyTwo, mockResourceTwo, 'DONE')
-  cache.deleteKeysWithPartialMatch('RETRIEVE_MOCK_RESOURCE', 101)
-  const cachedResult = cache.retrieve(keyTwo)
-  expect(cachedResult.data).toEqual(mockResourceTwo)
+  cache.deleteKeysWithPartialMatch('RESOURCE', 1)
+
+  // resource one should now be deleted
+  const cahcedResultOne = cache.retrieve(keyOne)
+  expect(cahcedResultOne).toBeUndefined()
+  // but resource two should still be there
+  const cachedResultTwo = cache.retrieve(keyTwo)
+  expect(cachedResultTwo.data).toEqual(mockResourceTwo)
+})
+
+test('Ignores TTL during offline mode', async () => {
+  cache.configure({ mode: 'ONLINE' })
+  cache.upsert(keyOne, mockResourceOne, 'DONE')
+  // Allow some time to pass so that resource is "old"
+  await new Promise((r) => setTimeout(r, 5))
+  const cachedResultOne = cache.retrieve(keyOne, 0)
+  expect(cachedResultOne).toBeUndefined()
+
+  // Now set to offline mode
+  cache.configure({ mode: 'OFFLINE' })
+  cache.upsert(keyTwo, mockResourceTwo, 'DONE')
+  await new Promise((r) => setTimeout(r, 5))
+  const cachedResultTwo = cache.retrieve(keyTwo, 0)
+  expect(cachedResultTwo.data).toEqual(mockResourceTwo)
+})
+
+test('Does not exceed the configured max size', () => {
+  cache.configure({ maxSize: 1 })
+
+  cache.upsert(keyOne, mockResourceOne, 'DONE')
+  cache.upsert(keyTwo, mockResourceTwo, 'DONE')
+
+  // The cache removes the oldest entry after max size is exceeded.
+  // Therefore, keyOne should no longer be available.
+  const cachedResult = cache.retrieve(keyOne)
+  expect(cachedResult).toBeUndefined()
 })
