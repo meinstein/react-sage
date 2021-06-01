@@ -14,7 +14,7 @@ export namespace QueryCache {
   }
 }
 
-const validateKey = (key: string | null): string => {
+const validateKey = (key?: string | null): string => {
   if (key === null) {
     throw new Error('[queryCache] cache key cannot be null')
   }
@@ -32,16 +32,19 @@ const validateKey = (key: string | null): string => {
 
 export class Cache {
   /**
-   * A default TTL for retrievals that do not specify one.
+   * A global TTL to cosnider when retrieving data from the cache.
+   * Default is 0 - so important to configure for your needs.
+   * NOTE: A more specific TTL can be applied to individual cache retrievals.
    */
   ttl: number
   /**
    * The maximum number of keys to be stored in the cache.
+   * Default is 0 - so important to configure for your needs.
    */
   maxSize: number
   /**
    * Either online or offline.
-   * When offline, TTLs are ignored and cache is always shown.
+   * When offline, TTLs are ignored and cache is returned if exists.
    */
   mode: QueryCache.Mode
   /**
@@ -96,7 +99,7 @@ export class Cache {
   /**
    * Calling this method persists the in-mem map to local storage.
    */
-  save(): void {
+  private save(): void {
     try {
       if (this.type === 'LOCAL_STORAGE') {
         window.localStorage._queryCache = JSON.stringify(Array.from(this._queryCache.entries()))
@@ -112,8 +115,10 @@ export class Cache {
   }
 
   /**
-   * This TTL (in seconds) is used for all cache retrievals that do not specify a TTL.
+   * TTL - this value (in seconds) is used for all cache retrievals that do not specify a TTL.
    * If a TTL is included in a given cache.retrieve(key, ttl), it will override this setting.
+   *
+   * maxSize - this value is to control how many entries are allowed in the cache before begin space is reclaimed for new ones.
    */
   public configure(configs: { ttl?: number; maxSize?: number; mode?: QueryCache.Mode; type?: QueryCache.Type }): void {
     if (configs.mode) this.mode = configs.mode
@@ -122,20 +127,24 @@ export class Cache {
     if (typeof configs.maxSize === 'number' && configs.maxSize >= 0) this.maxSize = configs.maxSize
   }
 
-  public upsert<T>(key?: string | null, data: T, status: QueryCache.Status): string | undefined {
+  public upsert<T>(args: { key?: string | null; data: T; status: QueryCache.Status }): string | undefined {
     try {
-      const validKey = validateKey(key)
+      const validKey = validateKey(args.key)
+
+      // When maxSize is set to zero, then upsert is essentially a no-op.
+      if (this.maxSize === 0) return
 
       if (this.cache.size >= this.maxSize) {
         // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
+        // NOTE: ES6 maps retain the order in which keys are inserted, hence pop is accurate method for doing this.
         const lastKey = Array.from(this.cache.keys()).pop()
         this.deleteKeyWithExactMatch(lastKey)
       }
 
       // Store the cached data under the desingated key and include timestamp.
       this.cache.set(validKey, {
-        data,
-        status,
+        data: args.data,
+        status: args.status,
         cachedAt: Date.now()
       } as QueryCache.Item<T>)
 
@@ -151,9 +160,9 @@ export class Cache {
    * @param key The key on which to store this cached value.
    * @param ttl The TTL (in seconds) for this particular retrieval.
    */
-  public retrieve<T>(key?: string | null, ttl?: number): QueryCache.Item<T> | undefined {
+  public retrieve<T>(args: { key?: string | null; ttl?: number }): QueryCache.Item<T> | undefined {
     try {
-      const validKey = validateKey(key)
+      const validKey = validateKey(args.key)
 
       const cachedItem = this.cache.get(validKey)
 
@@ -162,10 +171,10 @@ export class Cache {
       if (this.mode === 'OFFLINE') return cachedItem
 
       // Check for either a base TTL or passed in TTL
-      const _ttl = ttl ?? this.ttl
-      const _ttlInSeconds = _ttl * 1000
+      const _ttl = args.ttl ?? this.ttl
+      const _ttlInMilliseconds = _ttl * 1000
 
-      const isCacheStale = Date.now() - cachedItem.cachedAt > _ttlInSeconds
+      const isCacheStale = Date.now() - cachedItem.cachedAt > _ttlInMilliseconds
 
       if (isCacheStale) return undefined
 

@@ -46,7 +46,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
 
   const cacheKey = caching.key ? queryCache.createKey(caching.key, stableArgs) : null
   const retrieveCachedResult = React.useCallback(() => {
-    return queryCache.retrieve<U[]>(cacheKey, caching.ttl)
+    return queryCache.retrieve<U[]>({ key: cacheKey, ttl: caching.ttl })
   }, [cacheKey, caching.ttl])
 
   const [state, setState] = React.useState(() => {
@@ -99,7 +99,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
           /**
            * Notify the cache that this query is in flight.
            */
-          queryCache.upsert(cacheKey, null, 'PENDING')
+          queryCache.upsert({ key: cacheKey, data: null, status: 'PENDING' })
           /**
            * Parse the stable, stringified args into JS and invoke the underlying fetch method.
            */
@@ -108,7 +108,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
           /**
            * If we end up here, it means that all went well and the data returned smoothly.
            */
-          queryCache.upsert(cacheKey, result, 'DONE')
+          queryCache.upsert({ key: cacheKey, data: result, status: 'DONE' })
           setState((prevState) => ({ ...prevState, result, loading: false }))
         } catch (error) {
           /**
@@ -120,7 +120,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
             await sleep(_retries * 250)
             await fetchQuery(_retries - 1)
           } else {
-            queryCache.upsert(cacheKey, error, 'FAILED')
+            queryCache.upsert({ key: cacheKey, data: error, status: 'FAILED' })
             setState((prevState) => ({ ...prevState, loading: false, error }))
           }
         }
