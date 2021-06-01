@@ -10,7 +10,7 @@ export const UseBatchQueryDemo: React.FC = () => {
   const query = useBatchQuery(client.getResource, {
     args,
     polling: { delay },
-    caching: { key: 'getResources', ttl: 100 }
+    caching: { key: 'getResources', ttl: 10 }
   })
 
   return (

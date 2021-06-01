@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { Cache } from './queryCache'
 
 const cache = new Cache()
@@ -8,7 +11,7 @@ const keyOne = cache.createKey('RESOURCE', JSON.stringify({ id: mockResourceOne.
 const mockResourceTwo = { userId: 2, id: 2, title: 'Bar', completed: true }
 const keyTwo = cache.createKey('RESOURCE', JSON.stringify({ id: mockResourceTwo.id }))
 
-afterEach(() => cache.reset())
+afterEach(() => cache.clear())
 
 test('Upsert key with exact match', () => {
   cache.upsert(keyOne, mockResourceOne, 'DONE')
@@ -61,4 +64,20 @@ test('Does not exceed the configured max size', () => {
   // Therefore, keyOne should no longer be available.
   const cachedResult = cache.retrieve(keyOne)
   expect(cachedResult).toBeUndefined()
+})
+
+test('Persists to local storage', () => {
+  cache.configure({ type: 'LOCAL_STORAGE' })
+
+  cache.upsert(keyOne, mockResourceOne, 'DONE')
+  const serializedMapEntries = window.localStorage._queryCache
+  expect(JSON.parse(serializedMapEntries).length).toBe(1)
+})
+
+test('Persists to session storage', () => {
+  cache.configure({ type: 'SESSION_STORAGE' })
+
+  cache.upsert(keyOne, mockResourceOne, 'DONE')
+  const serializedMapEntries = window.sessionStorage._queryCache
+  expect(JSON.parse(serializedMapEntries).length).toBe(1)
 })
