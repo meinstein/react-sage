@@ -14,7 +14,7 @@ export namespace QueryCache {
   }
 }
 
-const validateKey = (key?: string | null): string => {
+const getValidKey = (key?: string | number | null): string => {
   if (key === null) {
     throw new Error('[queryCache] cache key cannot be null')
   }
@@ -27,16 +27,20 @@ const validateKey = (key?: string | null): string => {
     throw new Error('[queryCache] cache key canont be empty string')
   }
 
-  return key
+  return String(key)
+}
+
+const isExpired = (args: { cachedAtMs: number; maxAgeMs: number }): boolean => {
+  return Date.now() - args.cachedAtMs > args.maxAgeMs
 }
 
 export class Cache {
   /**
-   * A global TTL to cosnider when retrieving data from the cache.
+   * A global TTL (in seconds) to cosnider when retrieving data from the cache.
    * Default is 0 - so important to configure for your needs.
    * NOTE: A more specific TTL can be applied to individual cache retrievals.
    */
-  ttl: number
+  maxAge: number
   /**
    * The maximum number of keys to be stored in the cache.
    * Default is 0 - so important to configure for your needs.
@@ -57,7 +61,10 @@ export class Cache {
 
   constructor() {
     this._queryCache = new Map()
-    this.ttl = 0
+    /**
+     * Defaults to 0, which means users must configure this for the cache to do anything at all.
+     */
+    this.maxAge = 0
     /**
      * Defaults to 0, which means users must configure this for the cache to do anything at all.
      */
@@ -96,6 +103,10 @@ export class Cache {
     }
   }
 
+  get keys(): string[] {
+    return Array.from(this.cache.keys())
+  }
+
   /**
    * Calling this method persists the in-mem map to local storage.
    */
@@ -115,21 +126,29 @@ export class Cache {
   }
 
   /**
-   * TTL - this value (in seconds) is used for all cache retrievals that do not specify a TTL.
+   * @param ttl - this value (in seconds) is used for all cache retrievals that do not specify a TTL.
    * If a TTL is included in a given cache.retrieve(key, ttl), it will override this setting.
    *
-   * maxSize - this value is to control how many entries are allowed in the cache before begin space is reclaimed for new ones.
+   * @param maxSize - this value is to control how many entries are allowed in the cache before begin space is reclaimed for new ones.
    */
-  public configure(configs: { ttl?: number; maxSize?: number; mode?: QueryCache.Mode; type?: QueryCache.Type }): void {
+  public configure(configs: {
+    /**
+     * In seconds.
+     */
+    maxAge?: number
+    maxSize?: number
+    mode?: QueryCache.Mode
+    type?: QueryCache.Type
+  }): void {
     if (configs.mode) this.mode = configs.mode
     if (configs.type) this.type = configs.type
-    if (typeof configs.ttl === 'number' && configs.ttl >= 0) this.ttl = configs.ttl
+    if (typeof configs.maxAge === 'number' && configs.maxAge >= 0) this.maxAge = configs.maxAge
     if (typeof configs.maxSize === 'number' && configs.maxSize >= 0) this.maxSize = configs.maxSize
   }
 
   public upsert<T>(args: { key?: string | null; data: T; status: QueryCache.Status }): string | undefined {
     try {
-      const validKey = validateKey(args.key)
+      const validKey = getValidKey(args.key)
 
       // When maxSize is set to zero, then upsert is essentially a no-op.
       if (this.maxSize === 0) return
@@ -162,7 +181,7 @@ export class Cache {
    */
   public retrieve<T>(args: { key?: string | null; ttl?: number }): QueryCache.Item<T> | undefined {
     try {
-      const validKey = validateKey(args.key)
+      const validKey = getValidKey(args.key)
 
       const cachedItem = this.cache.get(validKey)
 
@@ -170,14 +189,24 @@ export class Cache {
 
       if (this.mode === 'OFFLINE') return cachedItem
 
-      // Check for either a base TTL or passed in TTL
-      const _ttl = args.ttl ?? this.ttl
-      const _ttlInMilliseconds = _ttl * 1000
+      // Do not worry about flushing expired items until AFTER we check for offline mode.
+      const expiredKeys = this.retrieveExpiredKeys()
 
-      const isCacheStale = Date.now() - cachedItem.cachedAt > _ttlInMilliseconds
+      if (typeof args.ttl === 'number') {
+        // Get the min value as between specific ttl and maxAge
+        const minMaxAge = Math.min(args.ttl, this.maxAge)
+        // If this particular key has a more specific TTL, then check it.
+        if (isExpired({ maxAgeMs: minMaxAge * 1000, cachedAtMs: cachedItem.cachedAt })) {
+          // If it is expired, then add it to the expired key list and delete the whole list of keys
+          // before returning undefined.
+          expiredKeys.push(validKey)
+          this.deleteKeysWithExactMatch(expiredKeys)
+          return undefined
+        }
+      }
 
-      if (isCacheStale) return undefined
-
+      // If the cache item is available and still valid, make sure to still flush the other expired keys.
+      this.deleteKeysWithExactMatch(expiredKeys)
       return cachedItem
     } catch (err) {
       return undefined
@@ -192,10 +221,23 @@ export class Cache {
    * Provide the exact key to delete from the cache.
    */
   public deleteKeyWithExactMatch(key?: string | number | null): void {
-    if (key) {
-      this.cache.delete(String(key))
-      this.save()
-    }
+    this.deleteKeysWithExactMatch([key])
+  }
+
+  /**
+   * Provide a list of exact keys delete from the cache.
+   */
+  public deleteKeysWithExactMatch(keys?: Array<string | number | null | undefined>): void {
+    keys?.forEach((key) => {
+      try {
+        const validKey = getValidKey(key)
+        this.cache.delete(validKey)
+      } catch (err) {
+        // No-op
+      }
+    })
+
+    this.save()
   }
 
   /**
@@ -203,11 +245,25 @@ export class Cache {
    */
   public deleteKeysWithPartialMatch(...parts: Array<string | number>): void {
     if (parts.length) {
-      this.cache.forEach((_, key) => {
-        const hasPartialMatch = parts.every((part) => key.includes(String(part)))
-        if (hasPartialMatch) this.deleteKeyWithExactMatch(key)
+      const keysToDelete = this.keys.filter((key) => {
+        return parts.every((part) => key.includes(String(part)))
       })
+
+      this.deleteKeysWithExactMatch(keysToDelete)
     }
+  }
+
+  public retrieveExpiredKeys(): string[] {
+    const expiredKeys: string[] = []
+    const maxAgeInMs = this.maxAge * 1000
+
+    this.cache.forEach((value, key) => {
+      if (isExpired({ cachedAtMs: value.cachedAt, maxAgeMs: maxAgeInMs })) {
+        expiredKeys.push(key)
+      }
+    })
+
+    return expiredKeys
   }
 
   public clear(): void {

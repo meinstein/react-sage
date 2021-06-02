@@ -135,7 +135,6 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
   }, [fetchQuery, wait])
 
   const refresh = React.useCallback(async (): Promise<void> => {
-    // console.log(document.visibilityState, document.visibilityState, polling.pauseOnVisibilityChange, polling)
     if (document.visibilityState && document.visibilityState === 'hidden' && pauseOnVisibilityChange) return
     // Deleted the cache key before fetching again ensures a "hard" refresh.
     queryCache.deleteKeyWithExactMatch(cacheKey)

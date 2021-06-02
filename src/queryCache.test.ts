@@ -11,9 +11,13 @@ const keyOne = cache.createKey('RESOURCE', JSON.stringify({ id: mockResourceOne.
 const mockResourceTwo = { userId: 2, id: 2, title: 'Bar', completed: true }
 const keyTwo = cache.createKey('RESOURCE', JSON.stringify({ id: mockResourceTwo.id }))
 
+const sleep = async (ms: number): Promise<void> => {
+  await new Promise((r) => setTimeout(r, ms))
+}
+
 beforeEach(() => {
   cache.configure({
-    ttl: 60,
+    maxAge: 60,
     maxSize: 10,
     mode: 'ONLINE',
     type: 'IN_MEMORY'
@@ -54,14 +58,14 @@ test('Ignores TTL during offline mode', async () => {
   cache.configure({ mode: 'ONLINE' })
   cache.upsert({ key: keyOne, data: mockResourceOne, status: 'DONE' })
   // Allow some time to pass so that resource is "old"
-  await new Promise((r) => setTimeout(r, 5))
+  await sleep(5)
   const resultOne = cache.retrieve({ key: keyOne, ttl: 0 })
   expect(resultOne).toBeUndefined()
 
   // Now set to offline mode
   cache.configure({ mode: 'OFFLINE' })
   cache.upsert({ key: keyTwo, data: mockResourceTwo, status: 'DONE' })
-  await new Promise((r) => setTimeout(r, 5))
+  await sleep(5)
   const resultTwo = cache.retrieve({ key: keyTwo, ttl: 0 })
   expect(resultTwo.data).toEqual(mockResourceTwo)
 })
@@ -92,4 +96,19 @@ test('Persists to session storage', () => {
   cache.upsert({ key: keyOne, data: mockResourceOne, status: 'DONE' })
   const serializedMapEntries = window.sessionStorage._queryCache
   expect(JSON.parse(serializedMapEntries).length).toBe(1)
+})
+
+test('Other expired keys are removed during retrieval', async () => {
+  // maxAge of 1 second
+  cache.configure({ maxAge: 1 })
+  // Add a resource
+  cache.upsert({ key: keyOne, data: mockResourceOne, status: 'DONE' })
+  // Sleep for just over one second
+  await sleep(1001)
+  // Add a second resource
+  cache.upsert({ key: keyTwo, data: mockResourceTwo, status: 'DONE' })
+  // Retrieve second resource
+  cache.retrieve({ key: keyTwo })
+  // keyOne should now be expired and cleared, bc every retrieval flushes expired items.
+  expect([...cache._queryCache.entries()].length).toBe(1)
 })
