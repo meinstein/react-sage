@@ -4,6 +4,8 @@ import { sleep } from '../../../src/utils'
 import { useQuery } from '../../../src/useQuery'
 import { queryCache } from '../../../src/queryCache'
 
+queryCache.configure({ maxAge: 5, maxSize: 100, type: 'IN_MEMORY' })
+
 export interface Resource {
   userId: number
   id: number
@@ -65,10 +67,10 @@ export const UseQueryDemo: React.FC = () => {
         <b>Response:</b> {JSON.stringify(query.result)}
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>
-        <b>Query Cache Order:</b> {JSON.stringify(queryCache.order)}
+        <b>Query Cache Keys:</b> {JSON.stringify(queryCache.keys)}
       </pre>
       <pre style={{ whiteSpace: 'pre-wrap' }}>
-        <b>Query Cache:</b> {JSON.stringify(queryCache.cache)}
+        <b>Query Cache (in-memory):</b> {JSON.stringify(Array.from(queryCache.cache.entries()))}
       </pre>
     </>
   )
