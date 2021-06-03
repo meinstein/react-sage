@@ -151,13 +151,18 @@ export class Cache {
       const validKey = getValidKey(args.key)
 
       // When maxSize is set to zero, then upsert is essentially a no-op.
-      if (this.maxSize === 0) return
+      if (this.maxSize === 0) return undefined
+
+      // When offline, do not add requests to the cahce.
+      if (this.mode === 'OFFLINE') return undefined
 
       if (this.cache.size >= this.maxSize) {
         // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
-        // NOTE: ES6 maps retain the order in which keys are inserted, hence pop is accurate method for doing this.
+        // NOTE: ES6 maps retain the order in which keys are inserted, hence using pop method is reliable.
         const lastKey = Array.from(this.cache.keys()).pop()
-        this.deleteKeyWithExactMatch(lastKey)
+        // NOTE: delete from this.cache (instead of using deleteKeyWithExactMatch method) so that
+        // save method is only invoked once (see below)
+        if (lastKey) this.cache.delete(lastKey)
       }
 
       // Store the cached data under the desingated key and include timestamp.
@@ -187,22 +192,21 @@ export class Cache {
 
       if (cachedItem === undefined) return undefined
 
-      if (this.mode === 'OFFLINE') return cachedItem
+      // When in OFFLINE mode, return all cached items right away.
+      // Do not include pending items, though, as that will lead to misguided UI.
+      if (this.mode === 'OFFLINE' && cachedItem.status !== 'PENDING') return cachedItem
 
       // Do not worry about flushing expired items until AFTER we check for offline mode.
       const expiredKeys = this.retrieveExpiredKeys()
 
-      if (typeof args.ttl === 'number') {
-        // Get the min value as between specific ttl and maxAge
-        const minMaxAge = Math.min(args.ttl, this.maxAge)
-        // If this particular key has a more specific TTL, then check it.
-        if (isExpired({ maxAgeMs: minMaxAge * 1000, cachedAtMs: cachedItem.cachedAt })) {
-          // If it is expired, then add it to the expired key list and delete the whole list of keys
-          // before returning undefined.
-          expiredKeys.push(validKey)
-          this.deleteKeysWithExactMatch(expiredKeys)
-          return undefined
-        }
+      // If the retrieve uses a specific TTL, then check which is lower as between that and the maxAge
+      const minMaxAge = typeof args.ttl === 'number' ? Math.min(args.ttl, this.maxAge) : this.maxAge
+      if (isExpired({ maxAgeMs: minMaxAge * 1000, cachedAtMs: cachedItem.cachedAt })) {
+        // If it is expired, then add it to the expired key list and delete the whole list of keys
+        // before returning undefined.
+        expiredKeys.push(validKey)
+        this.deleteKeysWithExactMatch(expiredKeys)
+        return undefined
       }
 
       // If the cache item is available and still valid, make sure to still flush the other expired keys.
