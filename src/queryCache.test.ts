@@ -55,19 +55,34 @@ test('Remove keys with partial match', () => {
 })
 
 test('Ignores TTL during offline mode', async () => {
+  // Insert some stuff while online
+  cache.configure({ mode: 'ONLINE', maxAge: 1 })
+  cache.upsert({ key: keyOne, data: mockResourceOne, status: 'DONE' })
+  // Flip to offline (nothing new can be set during offline mode)
+  cache.configure({ mode: 'OFFLINE' })
+  // sleep for longer than the maxAge (1s)
+  await sleep(1001)
+  // Resource should still be available
+  const resultOne = cache.retrieve({ key: keyOne })
+  expect(resultOne.data).toEqual(mockResourceOne)
+  // Flip back to online mode
+  cache.configure({ mode: 'ONLINE' })
+  // This time resource should be undefined bc it is stale
+  const resultOneAgain = cache.retrieve({ key: keyOne })
+  expect(resultOneAgain).toBeUndefined()
+})
+
+test('Stops inserting after offline mode toggled on', async () => {
+  // Insert some stuff while online
   cache.configure({ mode: 'ONLINE' })
   cache.upsert({ key: keyOne, data: mockResourceOne, status: 'DONE' })
-  // Allow some time to pass so that resource is "old"
-  await sleep(5)
-  const resultOne = cache.retrieve({ key: keyOne, ttl: 0 })
-  expect(resultOne).toBeUndefined()
-
-  // Now set to offline mode
+  // Flip to offline (nothing new can be set during offline mode)
   cache.configure({ mode: 'OFFLINE' })
-  cache.upsert({ key: keyTwo, data: mockResourceTwo, status: 'DONE' })
-  await sleep(5)
-  const resultTwo = cache.retrieve({ key: keyTwo, ttl: 0 })
-  expect(resultTwo.data).toEqual(mockResourceTwo)
+  cache.upsert({ key: keyTwo, data: mockResourceTwo, status: 'FAILED' })
+  const resultOne = cache.retrieve({ key: keyOne })
+  expect(resultOne.data).toEqual(mockResourceOne)
+  const resultTwo = cache.retrieve({ key: keyTwo })
+  expect(resultTwo).toBeUndefined()
 })
 
 test('Does not exceed the configured max size', () => {
