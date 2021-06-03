@@ -46,7 +46,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
 
   const cacheKey = caching.key ? queryCache.createKey(caching.key, stableArgs) : null
   const retrieveCachedResult = React.useCallback(() => {
-    return queryCache.retrieve<U[]>(cacheKey, caching.ttl)
+    return queryCache.retrieve<U[]>({ key: cacheKey, ttl: caching.ttl })
   }, [cacheKey, caching.ttl])
 
   const [state, setState] = React.useState(() => {
@@ -65,7 +65,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
        */
       if (wait) return
       /**
-       * Check the in-mem cache for anything about this query.
+       * Check the cache for anything about this query.
        */
       const cachedResult = retrieveCachedResult()
       /**
@@ -79,19 +79,19 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
         await sleep(caching.retryInterval || 250)
         await fetchQuery()
         /**
-         * If you end up here it means that a previous invocation of this query has completed
+         * If we end up here it means that a previous invocation of this query has completed
          * and been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'DONE') {
         setState((prevState) => ({ ...prevState, result: cachedResult.data as U[], loading: false }))
         /**
-         * If you end up here it menas that a previous invocation of this query has filed and
+         * If we end up here it means that a previous invocation of this query has filed and
          * been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'FAILED') {
         setState((prevState) => ({ ...prevState, error: cachedResult.data as Error, loading: false }))
         /**
-         * If you end up here, the query is not recorded in the cache and it is time to use the network.
+         * If we end up here, the query is not recorded in the cache and it is time to use the network.
          */
       } else {
         try {
@@ -99,16 +99,16 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
           /**
            * Notify the cache that this query is in flight.
            */
-          queryCache.upsert(cacheKey, null, 'PENDING')
+          queryCache.upsert({ key: cacheKey, data: null, status: 'PENDING' })
           /**
            * Parse the stable, stringified args into JS and invoke the underlying fetch method.
            */
           const parsedArgs: T[] = JSON.parse(stableArgs).map((stableArg: string): T => JSON.parse(stableArg))
           const result = await Promise.all(parsedArgs.map(method))
           /**
-           * If you end up here, it means that all went well and the data returned smoothly.
+           * If we end up here, it means that all went well and the data returned smoothly.
            */
-          queryCache.upsert(cacheKey, result, 'DONE')
+          queryCache.upsert({ key: cacheKey, data: result, status: 'DONE' })
           setState((prevState) => ({ ...prevState, result, loading: false }))
         } catch (error) {
           /**
@@ -120,7 +120,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
             await sleep(_retries * 250)
             await fetchQuery(_retries - 1)
           } else {
-            queryCache.upsert(cacheKey, error, 'FAILED')
+            queryCache.upsert({ key: cacheKey, data: error, status: 'FAILED' })
             setState((prevState) => ({ ...prevState, loading: false, error }))
           }
         }
@@ -135,7 +135,6 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
   }, [fetchQuery, wait])
 
   const refresh = React.useCallback(async (): Promise<void> => {
-    // console.log(document.visibilityState, document.visibilityState, polling.pauseOnVisibilityChange, polling)
     if (document.visibilityState && document.visibilityState === 'hidden' && pauseOnVisibilityChange) return
     // Deleted the cache key before fetching again ensures a "hard" refresh.
     queryCache.deleteKeyWithExactMatch(cacheKey)
