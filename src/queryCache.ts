@@ -9,7 +9,8 @@ export namespace QueryCache {
 
   export interface Item<T> {
     cachedAt: number
-    data: T | Error
+    data: T
+    error: Error | null
     status: Status
   }
 }
@@ -146,7 +147,9 @@ export class Cache {
     if (typeof configs.maxSize === 'number' && configs.maxSize >= 0) this.maxSize = configs.maxSize
   }
 
-  public upsert<T>(args: { key?: string | null; data: T; status: QueryCache.Status }): string | undefined {
+  public upsert<T>(
+    args: { key?: string | null } & Pick<QueryCache.Item<T>, 'data' | 'error' | 'status'>
+  ): string | undefined {
     try {
       const validKey = getValidKey(args.key)
 
@@ -168,6 +171,7 @@ export class Cache {
       // Store the cached data under the desingated key and include timestamp.
       this.cache.set(validKey, {
         data: args.data,
+        error: args.error,
         status: args.status,
         cachedAt: Date.now()
       } as QueryCache.Item<T>)
