@@ -75,23 +75,26 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
        * and move through to the network again.
        */
       if (cachedResult?.status === 'PENDING' && networkRetryCount === undefined) {
-        setState((prevState) => {
+        setState(() => {
           return {
-            ...prevState,
+            result: cachedResult.data,
+            error: cachedResult.error,
             loading: true
           }
         })
-        await sleep(caching.retryInterval || 250)
+        // NOTE: 250 is a hard-coded opinion about how long to wait before accessing the cache again to check
+        // for a result.
+        await sleep(250)
         await fetchQuery()
         /**
          * If we end up here it means that a previous invocation of this query has completed
          * and been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'DONE') {
-        setState((prevState) => {
+        setState(() => {
           return {
-            ...prevState,
             result: cachedResult.data,
+            error: cachedResult.error,
             loading: false
           }
         })
@@ -100,9 +103,9 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
          * been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'FAILED') {
-        setState((prevState) => {
+        setState(() => {
           return {
-            ...prevState,
+            result: cachedResult.data,
             error: cachedResult.error,
             loading: false
           }
@@ -156,8 +159,9 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
            */
           const _retries = networkRetryCount ?? retries
           if (_retries > 0) {
+            const retryInterval = caching.retryInterval ?? 250
             // Either utilize the recursive retryCount or the user-configured initial number of retries.
-            await sleep(_retries * 250)
+            await sleep(_retries * retryInterval)
             await fetchQuery(_retries - 1)
           } else {
             setState((prevState) => {
@@ -170,8 +174,8 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
                 data: prevState.result
               })
               return {
-                ...prevState,
                 error,
+                result: prevState.result,
                 loading: false
               }
             })
