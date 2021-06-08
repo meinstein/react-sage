@@ -52,9 +52,9 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
   const [state, setState] = React.useState(() => {
     const cachedResult = retrieveCachedResult()
     return {
-      result: cachedResult?.status === 'DONE' ? (cachedResult.data as U[]) : null,
+      result: cachedResult?.status === 'DONE' ? cachedResult.data : null,
       loading: cachedResult?.status === 'DONE' || cachedResult?.status === 'FAILED' ? false : !wait,
-      error: cachedResult?.status === 'FAILED' ? (cachedResult.data as Error) : null
+      error: cachedResult?.status === 'FAILED' ? cachedResult.error : null
     }
   })
 
@@ -75,7 +75,12 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
        * and move through to the network again.
        */
       if (cachedResult?.status === 'PENDING' && networkRetryCount === undefined) {
-        setState((prevState) => ({ ...prevState, loading: true }))
+        setState((prevState) => {
+          return {
+            ...prevState,
+            loading: true
+          }
+        })
         await sleep(caching.retryInterval || 250)
         await fetchQuery()
         /**
@@ -83,23 +88,47 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
          * and been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'DONE') {
-        setState((prevState) => ({ ...prevState, result: cachedResult.data as U[], loading: false }))
+        setState((prevState) => {
+          return {
+            ...prevState,
+            result: cachedResult.data,
+            loading: false
+          }
+        })
         /**
          * If we end up here it means that a previous invocation of this query has filed and
          * been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'FAILED') {
-        setState((prevState) => ({ ...prevState, error: cachedResult.data as Error, loading: false }))
+        setState((prevState) => {
+          return {
+            ...prevState,
+            error: cachedResult.error,
+            loading: false
+          }
+        })
         /**
          * If we end up here, the query is not recorded in the cache and it is time to use the network.
          */
       } else {
         try {
-          setState((prevState) => ({ ...prevState, loading: true }))
-          /**
-           * Notify the cache that this query is in flight.
-           */
-          queryCache.upsert({ key: cacheKey, data: null, status: 'PENDING' })
+          setState((prevState) => {
+            /**
+             * Notify the cache that this query is in flight.
+             */
+            queryCache.upsert({
+              key: cacheKey,
+              status: 'PENDING',
+              // NOTE: keep any previous results or errors in the cache.
+              // This allows UIs to do background fetches without clearing all data.
+              data: prevState.result,
+              error: prevState.error
+            })
+            return {
+              ...prevState,
+              loading: true
+            }
+          })
           /**
            * Parse the stable, stringified args into JS and invoke the underlying fetch method.
            */
@@ -108,8 +137,19 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
           /**
            * If we end up here, it means that all went well and the data returned smoothly.
            */
-          queryCache.upsert({ key: cacheKey, data: result, status: 'DONE' })
-          setState((prevState) => ({ ...prevState, result, loading: false }))
+          setState((prevState) => {
+            queryCache.upsert({
+              key: cacheKey,
+              status: 'DONE',
+              data: result,
+              error: null
+            })
+            return {
+              ...prevState,
+              result,
+              loading: false
+            }
+          })
         } catch (error) {
           /**
            * The first invocation of the query to fail will lead the retry charge.
@@ -120,8 +160,21 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
             await sleep(_retries * 250)
             await fetchQuery(_retries - 1)
           } else {
-            queryCache.upsert({ key: cacheKey, data: error, status: 'FAILED' })
-            setState((prevState) => ({ ...prevState, loading: false, error }))
+            setState((prevState) => {
+              queryCache.upsert({
+                error,
+                key: cacheKey,
+                status: 'FAILED',
+                // NOTE: keep previous result around (if exists) so that UI can display the data
+                // alongside the error (if applicable)
+                data: prevState.result
+              })
+              return {
+                ...prevState,
+                error,
+                loading: false
+              }
+            })
           }
         }
       }
