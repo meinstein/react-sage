@@ -58,9 +58,12 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
   const [state, setState] = React.useState(() => {
     const cachedResult = retrieveCachedResult()
     return {
-      result: cachedResult?.status === 'DONE' || cachedResult?.status === 'EXPIRED' ? cachedResult.data : null,
-      loading: cachedResult?.status === 'DONE' || cachedResult?.status === 'FAILED' ? false : !wait,
-      error: cachedResult?.status === 'FAILED' || cachedResult?.status === 'EXPIRED' ? cachedResult.error : null
+      result: cachedResult?.data || null,
+      error: cachedResult?.error || null,
+      loading:
+        cachedResult?.status === 'DONE' || cachedResult?.status === 'FAILED' || cachedResult?.status === 'EXPIRED'
+          ? false
+          : !wait
     }
   })
 
