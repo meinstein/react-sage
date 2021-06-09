@@ -11,13 +11,14 @@ const keyOne = cache.createKey('RESOURCE', JSON.stringify({ id: mockResourceOne.
 const mockResourceTwo = { userId: 2, id: 2, title: 'Bar', completed: true }
 const keyTwo = cache.createKey('RESOURCE', JSON.stringify({ id: mockResourceTwo.id }))
 
-const sleep = async (ms: number): Promise<void> => {
-  await new Promise((r) => setTimeout(r, ms))
+const sleepInSeconds = async (seconds: number): Promise<void> => {
+  await new Promise((r) => setTimeout(r, seconds * 1000))
 }
 
 beforeEach(() => {
   cache.configure({
-    maxAge: 60,
+    maxAge: 30,
+    staleWhileRevalidate: 60,
     maxSize: 10,
     mode: 'ONLINE',
     type: 'IN_MEMORY'
@@ -29,20 +30,20 @@ afterEach(() => {
 })
 
 test('Upsert key with exact match', () => {
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
   const result = cache.retrieve({ key: keyOne })
   expect(result.data).toEqual(mockResourceOne)
 })
 
 test('Remove key with exact match', () => {
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
-  cache.deleteKeyWithExactMatch(keyOne)
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
+  cache.deleteKey(keyOne)
   expect(cache.cache).toEqual(new Map())
 })
 
 test('Remove keys with partial match', () => {
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
-  cache.upsert({ key: keyTwo, data: mockResourceTwo, error: null, status: 'DONE' })
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
+  cache.upsert({ key: keyTwo, value: { data: mockResourceTwo, error: null, status: 'DONE' } })
   cache.deleteKeysWithPartialMatch('RESOURCE', 1)
 
   // resource one should now be deleted
@@ -56,29 +57,37 @@ test('Remove keys with partial match', () => {
 
 test('Ignores TTL during offline mode', async () => {
   // Insert some stuff while online
-  cache.configure({ mode: 'ONLINE', maxAge: 1 })
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
+  cache.configure({ mode: 'ONLINE', maxAge: 0.1, staleWhileRevalidate: 0.2 })
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
   // Flip to offline (nothing new can be set during offline mode)
   cache.configure({ mode: 'OFFLINE' })
   // sleep for longer than the maxAge (1s)
-  await sleep(1001)
+  await sleepInSeconds(0.15)
   // Resource should still be available
-  const resultOne = cache.retrieve({ key: keyOne })
+  let resultOne = cache.retrieve({ key: keyOne })
   expect(resultOne.data).toEqual(mockResourceOne)
+  // status is still DONE even though the max age has been exceeded.
+  expect(resultOne.status).toEqual('DONE')
   // Flip back to online mode
   cache.configure({ mode: 'ONLINE' })
-  // This time resource should be undefined bc it is stale
-  const resultOneAgain = cache.retrieve({ key: keyOne })
-  expect(resultOneAgain).toBeUndefined()
+  // After going online, the resource should still be avialable bc has not exceeded SWR
+  // Will be expired, though.
+  resultOne = cache.retrieve({ key: keyOne })
+  expect(resultOne.data).toEqual(mockResourceOne)
+  expect(resultOne.status).toEqual('EXPIRED')
+  // now sleep again and exceed the SWR
+  await sleepInSeconds(0.1)
+  resultOne = cache.retrieve({ key: keyOne })
+  expect(resultOne).toBeUndefined()
 })
 
 test('Stops inserting after offline mode toggled on', async () => {
   // Insert some stuff while online
   cache.configure({ mode: 'ONLINE' })
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
   // Flip to offline (nothing new can be set during offline mode)
   cache.configure({ mode: 'OFFLINE' })
-  cache.upsert({ key: keyTwo, data: mockResourceTwo, error: null, status: 'FAILED' })
+  cache.upsert({ key: keyTwo, value: { data: mockResourceTwo, error: null, status: 'FAILED' } })
   const resultOne = cache.retrieve({ key: keyOne })
   expect(resultOne.data).toEqual(mockResourceOne)
   const resultTwo = cache.retrieve({ key: keyTwo })
@@ -88,8 +97,8 @@ test('Stops inserting after offline mode toggled on', async () => {
 test('Does not exceed the configured max size', () => {
   cache.configure({ maxSize: 1 })
 
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
-  cache.upsert({ key: keyTwo, data: mockResourceTwo, error: null, status: 'DONE' })
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
+  cache.upsert({ key: keyTwo, value: { data: mockResourceTwo, error: null, status: 'DONE' } })
 
   // The cache removes the oldest entry after max size is exceeded.
   // Therefore, keyOne should no longer be available.
@@ -100,7 +109,7 @@ test('Does not exceed the configured max size', () => {
 test('Persists to local storage', () => {
   cache.configure({ type: 'LOCAL_STORAGE' })
 
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
   const serializedMapEntries = window.localStorage._queryCache
   expect(JSON.parse(serializedMapEntries).length).toBe(1)
 })
@@ -108,22 +117,20 @@ test('Persists to local storage', () => {
 test('Persists to session storage', () => {
   cache.configure({ type: 'SESSION_STORAGE' })
 
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
   const serializedMapEntries = window.sessionStorage._queryCache
   expect(JSON.parse(serializedMapEntries).length).toBe(1)
 })
 
 test('Other expired keys are removed during retrieval', async () => {
-  // maxAge of 1 second
-  cache.configure({ maxAge: 1 })
+  cache.configure({ maxAge: 0.1, staleWhileRevalidate: 0.2 })
   // Add a resource
-  cache.upsert({ key: keyOne, data: mockResourceOne, error: null, status: 'DONE' })
-  // Sleep for just over one second
-  await sleep(1001)
-  // Add a second resource
-  cache.upsert({ key: keyTwo, data: mockResourceTwo, error: null, status: 'DONE' })
-  // Retrieve second resource
-  cache.retrieve({ key: keyTwo })
+  cache.upsert({ key: keyOne, value: { data: mockResourceOne, error: null, status: 'DONE' } })
+
+  await sleepInSeconds(0.15)
+
+  // Retrieve the resource - should be expired at this point
+  const result = cache.retrieve({ key: keyOne })
   // keyOne should now be expired and cleared, bc every retrieval flushes expired items.
-  expect([...cache._queryCache.entries()].length).toBe(1)
+  expect(result.status).toBe('EXPIRED')
 })

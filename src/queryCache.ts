@@ -3,7 +3,7 @@
  */
 
 export namespace QueryCache {
-  export type Status = 'PENDING' | 'DONE' | 'FAILED'
+  export type Status = 'PENDING' | 'DONE' | 'FAILED' | 'EXPIRED'
   export type Mode = 'ONLINE' | 'OFFLINE'
   export type Type = 'IN_MEMORY' | 'SESSION_STORAGE' | 'LOCAL_STORAGE'
 
@@ -13,26 +13,11 @@ export namespace QueryCache {
     error: Error | null
     status: Status
   }
-}
 
-const getValidKey = (key?: string | number | null): string => {
-  if (key === null) {
-    throw new Error('[queryCache] cache key cannot be null')
+  export interface ItemCreateParams<T> {
+    key: string
+    value: Pick<Item<T>, 'data' | 'error' | 'status'>
   }
-
-  if (key === undefined) {
-    throw new Error('[queryCache] cache key cannot be undefined')
-  }
-
-  if (typeof key === 'string' && key.length === 0) {
-    throw new Error('[queryCache] cache key canont be empty string')
-  }
-
-  return String(key)
-}
-
-const isExpired = (args: { cachedAtMs: number; maxAgeMs: number }): boolean => {
-  return Date.now() - args.cachedAtMs > args.maxAgeMs
 }
 
 export class Cache {
@@ -42,6 +27,10 @@ export class Cache {
    * NOTE: A more specific TTL can be applied to individual cache retrievals.
    */
   maxAge: number
+  /**
+   * https://web.dev/stale-while-revalidate/
+   */
+  staleWhileRevalidate: number
   /**
    * The maximum number of keys to be stored in the cache.
    * Default is 0 - so important to configure for your needs.
@@ -57,8 +46,7 @@ export class Cache {
    */
   type: QueryCache.Type
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _queryCache: Map<string, QueryCache.Item<any>>
+  _queryCache: Map<string, QueryCache.Item<unknown>>
 
   constructor() {
     this._queryCache = new Map()
@@ -66,6 +54,7 @@ export class Cache {
      * Defaults to 0, which means users must configure this for the cache to do anything at all.
      */
     this.maxAge = 0
+    this.staleWhileRevalidate = 0
     /**
      * Defaults to 0, which means users must configure this for the cache to do anything at all.
      */
@@ -77,12 +66,12 @@ export class Cache {
     this.upsert = this.upsert.bind(this)
     this.retrieve = this.retrieve.bind(this)
     this.createKey = this.createKey.bind(this)
-    this.deleteKeyWithExactMatch = this.deleteKeyWithExactMatch.bind(this)
+    this.deleteKey = this.deleteKey.bind(this)
     this.deleteKeysWithPartialMatch = this.deleteKeysWithPartialMatch.bind(this)
+    this.expireKey = this.expireKey.bind(this)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get cache(): Map<string, QueryCache.Item<any>> {
+  get cache(): Map<string, QueryCache.Item<unknown>> {
     try {
       if (this.type === 'LOCAL_STORAGE') {
         const _queryCacheFromStorage = window.localStorage._queryCache
@@ -122,7 +111,6 @@ export class Cache {
       }
     } catch (err) {
       // no-op
-      return
     }
   }
 
@@ -138,111 +126,117 @@ export class Cache {
      */
     maxAge?: number
     maxSize?: number
+    staleWhileRevalidate?: number
     mode?: QueryCache.Mode
     type?: QueryCache.Type
   }): void {
-    if (configs.mode) this.mode = configs.mode
-    if (configs.type) this.type = configs.type
-    if (typeof configs.maxAge === 'number' && configs.maxAge >= 0) this.maxAge = configs.maxAge
-    if (typeof configs.maxSize === 'number' && configs.maxSize >= 0) this.maxSize = configs.maxSize
+    if (configs.mode) {
+      this.mode = configs.mode
+    }
+    if (configs.type) {
+      this.type = configs.type
+    }
+    if (typeof configs.maxAge === 'number' && configs.maxAge >= 0) {
+      this.maxAge = configs.maxAge
+    }
+    if (typeof configs.maxSize === 'number' && configs.maxSize >= 0) {
+      this.maxSize = configs.maxSize
+    }
+    if (typeof configs.staleWhileRevalidate === 'number' && configs.staleWhileRevalidate >= 0) {
+      this.staleWhileRevalidate = configs.staleWhileRevalidate
+    }
   }
 
-  public upsert<T>(
-    args: { key?: string | null } & Pick<QueryCache.Item<T>, 'data' | 'error' | 'status'>
-  ): string | undefined {
-    try {
-      const validKey = getValidKey(args.key)
+  public upsert<T>(item: QueryCache.ItemCreateParams<T>): boolean {
+    // When maxSize is set to zero, then upsert is essentially a no-op.
+    if (this.maxSize === 0) return false
 
-      // When maxSize is set to zero, then upsert is essentially a no-op.
-      if (this.maxSize === 0) return undefined
+    // When offline, do not add to the cache.
+    if (this.mode === 'OFFLINE') return false
 
-      // When offline, do not add requests to the cahce.
-      if (this.mode === 'OFFLINE') return undefined
-
-      if (this.cache.size >= this.maxSize) {
-        // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
-        // NOTE: ES6 maps retain the order in which keys are inserted, hence using pop method is reliable.
-        const lastKey = Array.from(this.cache.keys()).pop()
-        // NOTE: delete from this.cache (instead of using deleteKeyWithExactMatch method) so that
-        // save method is only invoked once (see below)
-        if (lastKey) this.cache.delete(lastKey)
-      }
-
-      // Store the cached data under the desingated key and include timestamp.
-      this.cache.set(validKey, {
-        data: args.data,
-        error: args.error,
-        status: args.status,
-        cachedAt: Date.now()
-      } as QueryCache.Item<T>)
-
-      this.save()
-
-      return validKey
-    } catch (err) {
-      return undefined
+    if (this.cache.size >= this.maxSize) {
+      // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
+      // NOTE: ES6 maps retain the order in which keys are inserted, hence using pop method is reliable.
+      const lastKey = Array.from(this.cache.keys()).pop()
+      // NOTE: delete from this.cache (instead of using deleteKey method) so that
+      // save method is only invoked once (see below)
+      if (lastKey) this.cache.delete(lastKey)
     }
+
+    // Store the cached data under the desingated key and include timestamp.
+
+    this.cache.set(item.key, {
+      data: item.value.data,
+      error: item.value.error,
+      status: item.value.status,
+      cachedAt: Date.now()
+    } as QueryCache.Item<T>)
+
+    this.save()
+
+    return true
   }
 
   /**
    * @param key The key on which to store this cached value.
    * @param ttl The TTL (in seconds) for this particular retrieval.
    */
-  public retrieve<T>(args: { key?: string | null; ttl?: number }): QueryCache.Item<T> | undefined {
-    try {
-      const validKey = getValidKey(args.key)
+  public retrieve<T>(args: {
+    key: string
+    maxAge?: number
+    staleWhileRevalidate?: number
+  }): QueryCache.Item<T> | undefined {
+    const cachedItem = this.cache.get(args.key) as QueryCache.Item<T> | undefined
 
-      const cachedItem = this.cache.get(validKey)
+    if (cachedItem === undefined) return undefined
 
-      if (cachedItem === undefined) return undefined
+    // When in OFFLINE mode, return all cached items right away.
+    // Do not include pending items, though, as that will lead to misguided UI.
+    if (this.mode === 'OFFLINE' && cachedItem.status !== 'PENDING') return cachedItem
 
-      // When in OFFLINE mode, return all cached items right away.
-      // Do not include pending items, though, as that will lead to misguided UI.
-      if (this.mode === 'OFFLINE' && cachedItem.status !== 'PENDING') return cachedItem
+    // NOTE: Date.now() and cachedAt are both in MS, therefore divide to convert to seconds.
+    const cacheAge = (Date.now() - cachedItem.cachedAt) / 1000
 
-      // Do not worry about flushing expired items until AFTER we check for offline mode.
-      const expiredKeys = this.retrieveExpiredKeys()
+    // Check Stale While Revalidate
+    const staleWhileRevalidate =
+      typeof args.staleWhileRevalidate === 'number'
+        ? Math.min(args.staleWhileRevalidate, this.staleWhileRevalidate)
+        : this.staleWhileRevalidate
 
-      // If the retrieve uses a specific TTL, then check which is lower as between that and the maxAge
-      const minMaxAge = typeof args.ttl === 'number' ? Math.min(args.ttl, this.maxAge) : this.maxAge
-      if (isExpired({ maxAgeMs: minMaxAge * 1000, cachedAtMs: cachedItem.cachedAt })) {
-        // If it is expired, then add it to the expired key list and delete the whole list of keys
-        // before returning undefined.
-        expiredKeys.push(validKey)
-        this.deleteKeysWithExactMatch(expiredKeys)
-        return undefined
-      }
-
-      // If the cache item is available and still valid, make sure to still flush the other expired keys.
-      this.deleteKeysWithExactMatch(expiredKeys)
-      return cachedItem
-    } catch (err) {
+    if (cacheAge > staleWhileRevalidate) {
+      this.deleteKey(args.key)
       return undefined
     }
+
+    // Check max age
+    const maxAge = typeof args.maxAge === 'number' ? Math.min(args.maxAge, this.maxAge) : this.maxAge
+
+    if (cacheAge > maxAge) {
+      const expiredItem = this.expireKey<T>(args.key)
+      return expiredItem
+    }
+
+    return cachedItem
   }
 
-  public createKey(...parts: Array<string | number>): string | undefined {
-    if (parts.length) return parts.map(String).join('::')
+  public createKey(...parts: string[]): string | undefined {
+    if (parts.length) return parts.join('::')
+    return undefined
   }
 
   /**
    * Provide the exact key to delete from the cache.
    */
-  public deleteKeyWithExactMatch(key?: string | number | null): void {
-    this.deleteKeysWithExactMatch([key])
+  public deleteKey(key: string): void {
+    this.deleteKeys([key])
   }
 
   /**
    * Provide a list of exact keys delete from the cache.
    */
-  public deleteKeysWithExactMatch(keys?: Array<string | number | null | undefined>): void {
-    keys?.forEach((key) => {
-      try {
-        const validKey = getValidKey(key)
-        this.cache.delete(validKey)
-      } catch (err) {
-        // No-op
-      }
+  public deleteKeys(keys: string[]): void {
+    keys.forEach((key) => {
+      this.cache.delete(key)
     })
 
     this.save()
@@ -257,21 +251,21 @@ export class Cache {
         return parts.every((part) => key.includes(String(part)))
       })
 
-      this.deleteKeysWithExactMatch(keysToDelete)
+      this.deleteKeys(keysToDelete)
     }
   }
 
-  public retrieveExpiredKeys(): string[] {
-    const expiredKeys: string[] = []
-    const maxAgeInMs = this.maxAge * 1000
+  public expireKey<T>(key: string): QueryCache.Item<T> | undefined {
+    const value = this.cache.get(key)
 
-    this.cache.forEach((value, key) => {
-      if (isExpired({ cachedAtMs: value.cachedAt, maxAgeMs: maxAgeInMs })) {
-        expiredKeys.push(key)
-      }
-    })
+    if (value) {
+      const updatedValue = { ...value, status: 'EXPIRED' } as QueryCache.Item<T>
+      this.cache.set(key, updatedValue)
+      this.save()
+      return updatedValue
+    }
 
-    return expiredKeys
+    return undefined
   }
 
   public clear(): void {

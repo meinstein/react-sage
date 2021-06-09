@@ -21,7 +21,11 @@ export namespace UseQuery {
     /**
      * In seconds.
      */
-    ttl?: number
+    maxAge?: number
+    /**
+     * In seconds.
+     */
+    staleWhileRevalidate?: number
     /**
      * The amount of time to wait before retrying the cache for a pending result. In milliseconds.
      * Default is 250ms.
