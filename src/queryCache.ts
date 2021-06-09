@@ -9,7 +9,7 @@ export namespace QueryCache {
 
   export interface Item<T> {
     cachedAt: number
-    data: T
+    data: T | null
     error: Error | null
     status: Status
   }

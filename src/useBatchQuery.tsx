@@ -90,9 +90,10 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
        * and move through to the network again.
        */
       if (cachedResult?.status === 'PENDING' && networkRetryCount === undefined) {
-        setState((prevState) => {
+        setState(() => {
           return {
-            ...prevState,
+            result: cachedResult.data,
+            error: cachedResult.error,
             loading: true
           }
         })
@@ -105,9 +106,10 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
          * and been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'DONE') {
-        setState((prevState) => {
+        setState(() => {
           return {
-            ...prevState,
+            result: cachedResult.data,
+            error: cachedResult.error,
             loading: false
           }
         })
@@ -116,9 +118,10 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
          * been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'FAILED') {
-        setState((prevState) => {
+        setState(() => {
           return {
-            ...prevState,
+            result: cachedResult.data,
+            error: cachedResult.error,
             loading: false
           }
         })
@@ -169,8 +172,8 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
               })
             }
             return {
-              ...prevState,
               result,
+              error: null,
               loading: false
             }
           })
