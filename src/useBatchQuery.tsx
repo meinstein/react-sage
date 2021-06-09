@@ -100,7 +100,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
         // NOTE: 250 is a hard-coded opinion about how long to wait before accessing the cache again to check
         // for a result.
         await sleep(250)
-        await fetchQuery()
+        return await fetchQuery()
         /**
          * If we end up here it means that a previous invocation of this query has completed
          * and been stored in the cache. Therefore, we can proceed with the cached result.
@@ -159,7 +159,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
           /**
            * If we end up here, it means that all went well and the data returned smoothly.
            */
-          setState((prevState) => {
+          setState(() => {
             if (cacheKey) {
               queryCache.upsert({
                 key: cacheKey,

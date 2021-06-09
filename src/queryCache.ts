@@ -160,7 +160,6 @@ export class Cache {
     }
 
     // Store the cached data under the desingated key and include timestamp.
-
     this.cache.set(item.key, {
       data: item.value.data,
       error: item.value.error,
