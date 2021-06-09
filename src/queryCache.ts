@@ -93,10 +93,6 @@ export class Cache {
     }
   }
 
-  get keys(): string[] {
-    return Array.from(this.cache.keys())
-  }
-
   /**
    * Calling this method persists the in-mem map to local storage.
    */
@@ -188,11 +184,15 @@ export class Cache {
   }): QueryCache.Item<T> | undefined {
     const cachedItem = this.cache.get(args.key) as QueryCache.Item<T> | undefined
 
-    if (cachedItem === undefined) return undefined
+    if (cachedItem === undefined) {
+      return undefined
+    }
 
     // When in OFFLINE mode, return all cached items right away.
     // Do not include pending items, though, as that will lead to misguided UI.
-    if (this.mode === 'OFFLINE' && cachedItem.status !== 'PENDING') return cachedItem
+    if (this.mode === 'OFFLINE' && cachedItem.status !== 'PENDING') {
+      return cachedItem
+    }
 
     // NOTE: Date.now() and cachedAt are both in MS, therefore divide to convert to seconds.
     const cacheAge = (Date.now() - cachedItem.cachedAt) / 1000
@@ -246,12 +246,17 @@ export class Cache {
    * Provide one or many parts of the keys that should be deleted from the cache.
    */
   public deleteKeysWithPartialMatch(...parts: Array<string | number>): void {
+    const keysToDelete: string[] = []
+
     if (parts.length) {
-      const keysToDelete = this.keys.filter((key) => {
-        return parts.every((part) => key.includes(String(part)))
+      this.cache.forEach((_, key) => {
+        const shouldDelete = parts.every((part) => key.includes(String(part)))
+        if (shouldDelete) keysToDelete.push(key)
       })
 
-      this.deleteKeys(keysToDelete)
+      if (keysToDelete.length) {
+        this.deleteKeys(keysToDelete)
+      }
     }
   }
 
