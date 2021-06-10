@@ -2,6 +2,21 @@ import { renderHook, act } from '@testing-library/react-hooks'
 
 import { sleep } from './utils'
 import { useBatchQuery } from './useBatchQuery'
+import { queryCache } from './queryCache'
+
+beforeEach(() => {
+  queryCache.configure({
+    maxAge: 1,
+    staleWhileRevalidate: 2,
+    maxSize: 10,
+    mode: 'ONLINE',
+    type: 'IN_MEMORY'
+  })
+})
+
+afterEach(() => {
+  queryCache.clear()
+})
 
 test('fetches data on mount', async () => {
   /**
@@ -67,6 +82,79 @@ test('waits on fetching until ready', async () => {
   // Should now return fetched data
   expect(r.current.result).toEqual([{ id: 1, name: 'foo' }])
   expect(method).toHaveBeenCalledTimes(1)
+})
+
+test.only('Only makes network request once', async () => {
+  const CACHE_KEY = 'FOO::["{\\"id\\":1}"]'
+  /**
+   * Ceremony
+   */
+  const method = jest.fn(
+    async (params: { id: number }): Promise<{ id: number; name: string }> => {
+      await sleep(5)
+      return Promise.resolve({ ...params, name: 'foo' })
+    }
+  )
+
+  const firstQuery = renderHook(() => {
+    return useBatchQuery(method, {
+      args: [{ id: 1 }],
+      caching: { key: 'FOO' }
+    })
+  })
+
+  const secondQuery = renderHook(() => {
+    return useBatchQuery(method, {
+      args: [{ id: 1 }],
+      caching: { key: 'FOO' }
+    })
+  })
+
+  // After mounting the two queries, the cache should be pending.
+  expect(queryCache.cache.get(CACHE_KEY).status).toEqual('PENDING')
+
+  // After the network request resolves, the loading should end and cache should be done.
+  // Moreover, the method should have only been called once (by the first one to mount)
+  await firstQuery.waitForNextUpdate()
+  await secondQuery.waitForNextUpdate()
+
+  expect(queryCache.cache.get(CACHE_KEY).status).toEqual('DONE')
+  expect(firstQuery.result.current.loading).toBeFalsy()
+  expect(secondQuery.result.current.loading).toBeFalsy()
+  expect(method).toHaveBeenCalledTimes(1)
+
+  // Expire the key
+  queryCache.expireKey(CACHE_KEY)
+  expect(queryCache.cache.get(CACHE_KEY).status).toEqual('EXPIRED')
+
+  // Mount a few more queries
+  const thirdQuery = renderHook(() => {
+    return useBatchQuery(method, {
+      args: [{ id: 1 }],
+      caching: { key: 'FOO' }
+    })
+  })
+
+  // Should Start loading again and go into a pending state
+  expect(thirdQuery.result.current.loading).toBeTruthy()
+  expect(queryCache.cache.get(CACHE_KEY).status).toEqual('PENDING')
+
+  const fourthQuery = renderHook(() => {
+    return useBatchQuery(method, {
+      args: [{ id: 1 }],
+      caching: { key: 'FOO' }
+    })
+  })
+
+  // Should still be pending
+  expect(queryCache.cache.get(CACHE_KEY).status).toEqual('PENDING')
+
+  // Allow for network request to resolve
+  await thirdQuery.waitForNextUpdate()
+  await fourthQuery.waitForNextUpdate()
+
+  expect(queryCache.cache.get(CACHE_KEY).status).toEqual('DONE')
+  expect(method).toHaveBeenCalledTimes(2)
 })
 
 test('starts polling when configured to do so', async () => {

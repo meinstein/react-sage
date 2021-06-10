@@ -2,6 +2,8 @@
  * Helper class for dealing with in-memory cache.
  */
 
+const NAMESPACE = '_queryCache'
+
 export namespace QueryCache {
   export type Status = 'PENDING' | 'DONE' | 'FAILED' | 'EXPIRED'
   export type Mode = 'ONLINE' | 'OFFLINE'
@@ -74,16 +76,16 @@ export class Cache {
   get cache(): Map<string, QueryCache.Item<unknown>> {
     try {
       if (this.type === 'LOCAL_STORAGE') {
-        const _queryCacheFromStorage = window.localStorage._queryCache
+        const _queryCacheFromStorage = window.localStorage.getItem(NAMESPACE)
         if (_queryCacheFromStorage) {
-          this._queryCache = new Map(JSON.parse(localStorage._queryCache))
+          this._queryCache = new Map(JSON.parse(_queryCacheFromStorage))
         }
       }
 
       if (this.type === 'SESSION_STORAGE') {
-        const _queryCacheFromStorage = window.sessionStorage._queryCache
+        const _queryCacheFromStorage = window.sessionStorage.getItem(NAMESPACE)
         if (_queryCacheFromStorage) {
-          this._queryCache = new Map(JSON.parse(sessionStorage._queryCache))
+          this._queryCache = new Map(JSON.parse(_queryCacheFromStorage))
         }
       }
 
@@ -99,11 +101,13 @@ export class Cache {
   private save(): void {
     try {
       if (this.type === 'LOCAL_STORAGE') {
-        window.localStorage._queryCache = JSON.stringify(Array.from(this._queryCache.entries()))
+        const serializedData = JSON.stringify(Array.from(this._queryCache.entries()))
+        window.localStorage.setItem(NAMESPACE, serializedData)
       }
 
       if (this.type === 'SESSION_STORAGE') {
-        window.sessionStorage._queryCache = JSON.stringify(Array.from(this._queryCache.entries()))
+        const serializedData = JSON.stringify(Array.from(this._queryCache.entries()))
+        window.sessionStorage.setItem(NAMESPACE, serializedData)
       }
     } catch (err) {
       // no-op
@@ -153,13 +157,14 @@ export class Cache {
     if (this.cache.size >= this.maxSize) {
       // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
       // NOTE: ES6 maps retain the order in which keys are inserted, hence using pop method is reliable.
-      const lastKey = Array.from(this.cache.keys()).pop()
+      const oldestKey = Array.from(this.cache.keys()).shift()
       // NOTE: delete from this.cache (instead of using deleteKey method) so that
       // save method is only invoked once (see below)
-      if (lastKey) this.cache.delete(lastKey)
+      if (oldestKey) this.cache.delete(oldestKey)
     }
 
     // Store the cached data under the desingated key and include timestamp.
+    this.cache.delete(item.key)
     this.cache.set(item.key, {
       data: item.value.data,
       error: item.value.error,
@@ -263,8 +268,10 @@ export class Cache {
     const value = this.cache.get(key)
 
     if (value) {
-      const updatedValue = { ...value, status: 'EXPIRED' } as QueryCache.Item<T>
-      this.cache.set(key, updatedValue)
+      this.cache.delete(key)
+      const newValue = { ...value, status: 'EXPIRED' } as QueryCache.Item<T>
+      const updatedMap = this.cache.set(key, newValue)
+      const updatedValue = updatedMap.get(key) as QueryCache.Item<T>
       this.save()
       return updatedValue
     }

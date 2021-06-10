@@ -45,14 +45,15 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
   }, [args])
 
   const cacheKey = caching.key ? queryCache.createKey(caching.key, stableArgs) : undefined
+
   const retrieveCachedResult = React.useCallback(() => {
-    if (cacheKey)
+    if (cacheKey) {
       return queryCache.retrieve<U[]>({
         key: cacheKey,
         maxAge: caching.maxAge,
         staleWhileRevalidate: caching.staleWhileRevalidate
       })
-    return undefined
+    }
   }, [cacheKey, caching.maxAge, caching.staleWhileRevalidate])
 
   const [state, setState] = React.useState(() => {
@@ -62,7 +63,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
       return {
         result: cachedResult.data,
         error: cachedResult.error,
-        loading: cachedResult.status === 'PENDING' ? true : !wait
+        loading: cachedResult.status === 'PENDING' || cachedResult.status === 'EXPIRED' ? true : !wait
       }
     }
 
@@ -83,6 +84,7 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
        * Check the cache for anything about this query.
        */
       const cachedResult = retrieveCachedResult()
+
       /**
        * The query may already be in-flight from a different invocation, in which case
        * we will wait and retry after a specified interval.
@@ -90,10 +92,10 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
        * and move through to the network again.
        */
       if (cachedResult?.status === 'PENDING' && networkRetryCount === undefined) {
-        setState(() => {
+        setState((prevState) => {
           return {
-            result: cachedResult.data,
-            error: cachedResult.error,
+            result: cachedResult.data ?? prevState.result,
+            error: cachedResult.error ?? prevState.error,
             loading: true
           }
         })
@@ -106,10 +108,10 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
          * and been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'DONE') {
-        setState(() => {
+        setState((prevState) => {
           return {
-            result: cachedResult.data,
-            error: cachedResult.error,
+            result: cachedResult.data ?? prevState.result,
+            error: cachedResult.error ?? prevState.error,
             loading: false
           }
         })
@@ -118,10 +120,10 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
          * been stored in the cache. Therefore, we can proceed with the cached result.
          */
       } else if (cachedResult?.status === 'FAILED') {
-        setState(() => {
+        setState((prevState) => {
           return {
-            result: cachedResult.data,
-            error: cachedResult.error,
+            result: cachedResult.data ?? prevState.result,
+            error: cachedResult.error ?? prevState.error,
             loading: false
           }
         })
@@ -130,47 +132,51 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
          */
       } else {
         try {
-          setState((prevState) => {
-            /**
-             * Notify the cache that this query is in flight.
-             */
-            if (cacheKey) {
-              queryCache.upsert({
-                key: cacheKey,
-                value: {
-                  status: 'PENDING',
-                  // NOTE: keep any previous results or errors in the cache.
-                  // This allows UIs to do background fetches without clearing all data.
-                  data: prevState.result,
-                  error: prevState.error
-                }
-              })
-            }
+          // NOTE: an EXPIRED cache item result will end up here and flip to a state of
+          // PENDING and bring with it all the previous data.
+          if (cacheKey) {
+            queryCache.upsert({
+              key: cacheKey,
+              value: {
+                status: 'PENDING',
+                // NOTE: keep any previous results or errors in the cache.
+                // This allows UIs to do background fetches without clearing all data.
+                data: cachedResult?.data ?? null,
+                error: cachedResult?.error ?? null
+              }
+            })
+          }
+
+          setState(() => {
             return {
-              ...prevState,
+              result: cachedResult?.data ?? null,
+              error: cachedResult?.error ?? null,
               loading: true
             }
           })
+
           /**
            * Parse the stable, stringified args into JS and invoke the underlying fetch method.
            */
           const parsedArgs: T[] = JSON.parse(stableArgs).map((stableArg: string): T => JSON.parse(stableArg))
           const result = await Promise.all(parsedArgs.map(method))
+
           /**
            * If we end up here, it means that all went well and the data returned smoothly.
            */
+          if (cacheKey) {
+            queryCache.upsert({
+              key: cacheKey,
+              value: {
+                status: 'DONE',
+                data: result,
+                // Can nullify any error on a successul network response.
+                error: null
+              }
+            })
+          }
+
           setState(() => {
-            if (cacheKey) {
-              queryCache.upsert({
-                key: cacheKey,
-                value: {
-                  status: 'DONE',
-                  data: result,
-                  // Can nullify any error on a successul network response.
-                  error: null
-                }
-              })
-            }
             return {
               result,
               error: null,
@@ -188,22 +194,22 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
             await sleep(_retries * retryInterval)
             await fetchQuery(_retries - 1)
           } else {
+            if (cacheKey) {
+              queryCache.upsert({
+                key: cacheKey,
+                value: {
+                  error,
+                  status: 'FAILED',
+                  // NOTE: keep previous result around (if exists) so that UI can display the data
+                  // alongside the error (if applicable)
+                  data: cachedResult?.data ?? null
+                }
+              })
+            }
             setState((prevState) => {
-              if (cacheKey) {
-                queryCache.upsert({
-                  key: cacheKey,
-                  value: {
-                    error,
-                    status: 'FAILED',
-                    // NOTE: keep previous result around (if exists) so that UI can display the data
-                    // alongside the error (if applicable)
-                    data: prevState.result
-                  }
-                })
-              }
               return {
-                ...prevState,
                 error,
+                result: cachedResult?.data ?? prevState.result,
                 loading: false
               }
             })
@@ -217,13 +223,15 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
   // Initiate fetch on mount
   React.useEffect(() => {
     fetchQuery()
-  }, [fetchQuery, wait])
+    // Adding fetchQuery to the dep list causes too many refetches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wait])
 
   const refresh = React.useCallback(async (): Promise<void> => {
     if (document.visibilityState && document.visibilityState === 'hidden' && pauseOnVisibilityChange) return
     // Deleted the cache key before fetching again ensures a "hard" refresh.
     if (cacheKey) queryCache.expireKey(cacheKey)
-    await fetchQuery()
+    return await fetchQuery()
   }, [cacheKey, fetchQuery, pauseOnVisibilityChange])
 
   // The value of `wait` also dictates whether the interval should run its course.
