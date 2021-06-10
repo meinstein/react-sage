@@ -56,6 +56,9 @@ export class Cache {
      * Defaults to 0, which means users must configure this for the cache to do anything at all.
      */
     this.maxAge = 0
+    /**
+     * Defaults to 0, which means users must configure this for the cache to do anything at all.
+     */
     this.staleWhileRevalidate = 0
     /**
      * Defaults to 0, which means users must configure this for the cache to do anything at all.
@@ -149,7 +152,15 @@ export class Cache {
 
   public upsert<T>(item: QueryCache.ItemCreateParams<T>): boolean {
     // When maxSize is set to zero, then upsert is essentially a no-op.
-    if (this.maxSize === 0) return false
+    if (this.maxSize <= 0) {
+      console.error(
+        '[react-sage]',
+        '[queryCache]',
+        '[upsert]',
+        'maxSize must be configured to a value greater than 0 in to enable the query cache'
+      )
+      return false
+    }
 
     // When offline, do not add to the cache.
     if (this.mode === 'OFFLINE') return false
@@ -163,7 +174,9 @@ export class Cache {
       if (oldestKey) this.cache.delete(oldestKey)
     }
 
-    // Store the cached data under the desingated key and include timestamp.
+    // NOTE: Delete operation is important precedent, as it ensures that the newly
+    // set item is last in the list of entries (ie, the latest) and will not get
+    // shifted too soon.
     this.cache.delete(item.key)
     this.cache.set(item.key, {
       data: item.value.data,
@@ -172,6 +185,7 @@ export class Cache {
       cachedAt: Date.now()
     } as QueryCache.Item<T>)
 
+    // Save the side effect of this delete + set
     this.save()
 
     return true
@@ -186,6 +200,26 @@ export class Cache {
     maxAge?: number
     staleWhileRevalidate?: number
   }): QueryCache.Item<T> | undefined {
+    if (this.maxAge === 0 && args.maxAge === undefined) {
+      console.error(
+        '[react-sage]',
+        '[queryCache]',
+        '[retrieve]',
+        'maxAge must be configured to a value greater than 0 in order to enable caching'
+      )
+      return undefined
+    }
+
+    if (this.staleWhileRevalidate === 0 && args.staleWhileRevalidate === undefined) {
+      console.error(
+        '[react-sage]',
+        '[queryCache]',
+        '[retrieve]',
+        'staleWhileRevalidate must be configured to a valude greater than 0 in order to enable caching'
+      )
+      return undefined
+    }
+
     const cachedItem = this.cache.get(args.key) as QueryCache.Item<T> | undefined
 
     if (cachedItem === undefined) {
@@ -201,7 +235,7 @@ export class Cache {
     // NOTE: Date.now() and cachedAt are both in MS, therefore divide to convert to seconds.
     const cacheAge = (Date.now() - cachedItem.cachedAt) / 1000
 
-    // Check Stale While Revalidate
+    // Check Stale While Revalidate (must go before maxAge for obvious reasons)
     const staleWhileRevalidate =
       typeof args.staleWhileRevalidate === 'number'
         ? Math.min(args.staleWhileRevalidate, this.staleWhileRevalidate)
@@ -214,7 +248,6 @@ export class Cache {
 
     // Check max age
     const maxAge = typeof args.maxAge === 'number' ? Math.min(args.maxAge, this.maxAge) : this.maxAge
-
     if (cacheAge > maxAge) {
       const expiredItem = this.expireKey<T>(args.key)
       return expiredItem
@@ -223,6 +256,9 @@ export class Cache {
     return cachedItem
   }
 
+  /**
+   * This is essentially a helper-class.
+   */
   public createKey(...parts: string[]): string | undefined {
     if (parts.length) return parts.join('::')
     return undefined
@@ -237,6 +273,7 @@ export class Cache {
 
   /**
    * Provide a list of exact keys delete from the cache.
+   * Also saves the side effect of the delete operation (after bulk change is made)
    */
   public deleteKeys(keys: string[]): void {
     keys.forEach((key) => {
@@ -264,11 +301,14 @@ export class Cache {
     }
   }
 
+  /**
+   * This job of this method is to  update the status property of the provided key.
+   * Also saves the side effect of this update.
+   */
   public expireKey<T>(key: string): QueryCache.Item<T> | undefined {
     const value = this.cache.get(key)
 
     if (value) {
-      this.cache.delete(key)
       const newValue = { ...value, status: 'EXPIRED' } as QueryCache.Item<T>
       const updatedMap = this.cache.set(key, newValue)
       const updatedValue = updatedMap.get(key) as QueryCache.Item<T>
@@ -279,6 +319,9 @@ export class Cache {
     return undefined
   }
 
+  /**
+   * Clears the map and saves the side effect of doing so.
+   */
   public clear(): void {
     this.cache.clear()
     this.save()

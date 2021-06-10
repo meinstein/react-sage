@@ -84,7 +84,7 @@ test('waits on fetching until ready', async () => {
   expect(method).toHaveBeenCalledTimes(1)
 })
 
-test.only('Only makes network request once', async () => {
+test('Only makes network request once', async () => {
   const CACHE_KEY = 'FOO::["{\\"id\\":1}"]'
   /**
    * Ceremony

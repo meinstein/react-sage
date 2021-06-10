@@ -100,7 +100,8 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
           }
         })
         // NOTE: 250 is a hard-coded opinion about how long to wait before accessing the cache again to check
-        // for a result.
+        // for a result. Eventually, if something goes wrong with the underlying network request, then it will flip
+        // to FAILED, in which case this recusrive call should discontinue.
         await sleep(250)
         return await fetchQuery()
         /**
