@@ -157,6 +157,25 @@ test('Only makes network request once', async () => {
   expect(method).toHaveBeenCalledTimes(2)
 })
 
+test('Fetches query again args change', async () => {
+  let id = 1
+  const method = jest.fn()
+
+  const { rerender } = renderHook(() => useBatchQuery(method, { args: [{ id }] }))
+
+  /**
+   * Fetches immediately upon mount.
+   */
+  expect(method).toHaveBeenCalledTimes(1)
+
+  await act(async () => {
+    id = 2
+    rerender()
+  })
+
+  expect(method).toHaveBeenCalledTimes(2)
+})
+
 test('starts polling when configured to do so', async () => {
   jest.useFakeTimers()
   const method = jest.fn()

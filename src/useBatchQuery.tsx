@@ -221,12 +221,12 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
     [stableArgs, method, retrieveCachedResult, wait, cacheKey, retries, caching.retryInterval]
   )
 
-  // Initiate fetch on mount
+  // Initiate fetch on mount and whenever the stable args change.
   React.useEffect(() => {
     fetchQuery()
     // Adding fetchQuery to the dep list causes too many refetches.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wait])
+  }, [stableArgs, wait])
 
   const refresh = React.useCallback(async (): Promise<void> => {
     if (document.visibilityState && document.visibilityState === 'hidden' && pauseOnVisibilityChange) return
