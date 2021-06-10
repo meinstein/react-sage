@@ -44,6 +44,10 @@ export class Cache {
    */
   mode: QueryCache.Mode
   /**
+   * Print warnings and tips to the console
+   */
+  logWarnings: boolean
+  /**
    * Either in-memory or persisted.
    */
   type: QueryCache.Type
@@ -66,6 +70,7 @@ export class Cache {
     this.maxSize = 0
     this.mode = 'ONLINE'
     this.type = 'IN_MEMORY'
+    this.logWarnings = true
 
     this.configure = this.configure.bind(this)
     this.upsert = this.upsert.bind(this)
@@ -132,12 +137,16 @@ export class Cache {
     staleWhileRevalidate?: number
     mode?: QueryCache.Mode
     type?: QueryCache.Type
+    logWarnings?: boolean
   }): void {
     if (configs.mode) {
       this.mode = configs.mode
     }
     if (configs.type) {
       this.type = configs.type
+    }
+    if (configs.logWarnings) {
+      this.logWarnings = configs.logWarnings
     }
     if (typeof configs.maxAge === 'number' && configs.maxAge >= 0) {
       this.maxAge = configs.maxAge
@@ -150,15 +159,16 @@ export class Cache {
     }
   }
 
+  private logWarning(...parts: string[]): void {
+    if (this.logWarnings) {
+      console.warn('[react-sage]', '[queryCache]', ...parts)
+    }
+  }
+
   public upsert<T>(item: QueryCache.ItemCreateParams<T>): boolean {
     // When maxSize is set to zero, then upsert is essentially a no-op.
     if (this.maxSize <= 0) {
-      console.error(
-        '[react-sage]',
-        '[queryCache]',
-        '[upsert]',
-        'maxSize must be configured to a value greater than 0 in to enable the query cache'
-      )
+      this.logWarning('maxSize must be configured to a value greater than 0 in to enable the query cache')
       return false
     }
 
@@ -200,22 +210,15 @@ export class Cache {
     maxAge?: number
     staleWhileRevalidate?: number
   }): QueryCache.Item<T> | undefined {
-    if (this.maxAge === 0 && args.maxAge === undefined) {
-      console.error(
-        '[react-sage]',
-        '[queryCache]',
-        '[retrieve]',
-        'maxAge must be configured to a value greater than 0 in order to enable caching'
-      )
+    if (this.maxAge <= 0 && args.maxAge === undefined) {
+      this.logWarning(args.key, 'maxAge must be configured to a value greater than 0 in order to enable proper caching')
       return undefined
     }
 
-    if (this.staleWhileRevalidate === 0 && args.staleWhileRevalidate === undefined) {
-      console.error(
-        '[react-sage]',
-        '[queryCache]',
-        '[retrieve]',
-        'staleWhileRevalidate must be configured to a valude greater than 0 in order to enable caching'
+    if (this.staleWhileRevalidate <= 0 && args.staleWhileRevalidate === undefined) {
+      this.logWarning(
+        args.key,
+        'staleWhileRevalidate must be configured to a value greater than 0 in order to enable proper caching'
       )
       return undefined
     }
@@ -236,10 +239,8 @@ export class Cache {
     const cacheAge = (Date.now() - cachedItem.cachedAt) / 1000
 
     // Check Stale While Revalidate (must go before maxAge for obvious reasons)
-    const staleWhileRevalidate =
-      typeof args.staleWhileRevalidate === 'number'
-        ? Math.min(args.staleWhileRevalidate, this.staleWhileRevalidate)
-        : this.staleWhileRevalidate
+    // Go by specificity: if a SWR value is provided in the retrieve params, use that, else use the default configuration.
+    const staleWhileRevalidate = args.staleWhileRevalidate ?? this.staleWhileRevalidate
 
     if (cacheAge > staleWhileRevalidate) {
       this.deleteKey(args.key)
@@ -247,7 +248,8 @@ export class Cache {
     }
 
     // Check max age
-    const maxAge = typeof args.maxAge === 'number' ? Math.min(args.maxAge, this.maxAge) : this.maxAge
+    // Go by specificity: if a maxAge value is provided in the retrieve params, use that, else use the default configuration.
+    const maxAge = args.maxAge ?? this.maxAge
     if (cacheAge > maxAge) {
       const expiredItem = this.expireKey<T>(args.key)
       return expiredItem
