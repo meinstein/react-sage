@@ -40,7 +40,7 @@ export class Cache {
   maxSize: number
   /**
    * Either online or offline.
-   * When offline, TTLs are ignored and cache is returned if exists.
+   * When offline, TTLs and clearing are ignored - and cache is always returned if exists.
    */
   mode: QueryCache.Mode
   /**
@@ -323,10 +323,13 @@ export class Cache {
 
   /**
    * Clears the map and saves the side effect of doing so.
+   * Is a no-op when cahce is in OFFLINE mode.
    */
   public clear(): void {
-    this.cache.clear()
-    this.save()
+    if (this.mode === 'ONLINE') {
+      this.cache.clear()
+      this.save()
+    }
   }
 }
 
