@@ -178,7 +178,7 @@ export class Cache {
     if (this.cache.size >= this.maxSize) {
       // When exceeds max size, shift (ie, remove the oldest key) and delete from cache.
       // NOTE: ES6 maps retain the order in which keys are inserted, hence using pop method is reliable.
-      const oldestKey = Array.from(this.cache.keys()).shift()
+      const [oldestKey] = this.cache.entries().next().value
       // NOTE: delete from this.cache (instead of using deleteKey method) so that
       // save method is only invoked once (see below)
       if (oldestKey) this.cache.delete(oldestKey)
