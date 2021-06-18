@@ -45,10 +45,16 @@ export namespace UseQuery {
      */
     pauseOnVisibilityChange?: boolean
   }
+
+  export interface Response<U> {
+    result: U | null
+    refresh: () => Promise<void>
+    error: Error | null
+    loading: boolean
+  }
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function useQuery<T, U>(method: (args: T) => Promise<U>, options: UseQuery.Options<T>) {
+export function useQuery<T, U>(method: (args: T) => Promise<U>, options: UseQuery.Options<T>): UseQuery.Response<U> {
   // useQuery is simply an implementation of useBatchQuery, therefore must adjust any args
   // so they become compatible with useBatchQuery's reqs.
   const query = useBatchQuery(method, {
