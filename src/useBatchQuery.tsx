@@ -148,10 +148,10 @@ export function useBatchQuery<T, U>(method: (args: T) => Promise<U>, options: Us
             })
           }
 
-          setState(() => {
+          setState((prevState) => {
             return {
-              result: cachedResult?.data ?? null,
-              error: cachedResult?.error ?? null,
+              result: cachedResult?.data ?? prevState.result ?? null,
+              error: cachedResult?.error ?? prevState.error ?? null,
               loading: true
             }
           })
